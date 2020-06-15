@@ -1,9 +1,20 @@
 extern crate image;
 
-fn main() {
+use image::{ImageBuffer, RgbImage};
 
-    let buffer: &[u8] = unimplemented!(); // Generate the image data
+fn main()
+{
+    let width = 512;
+    let height = 512;
+    let mut img: RgbImage = ImageBuffer::new(width, height);
 
-    // Save the buffer as "image.png"
-    image::save_buffer("image.png", buffer, 800, 600, image::ColorType::Rgb8).unwrap()
+
+    // Iterate over all pixels in the image.
+    for (_x, _y, pixel) in img.enumerate_pixels_mut() 
+    {
+        *pixel = image::Rgb([255, 0, 0]);
+    }
+    
+    img.save("test.png").unwrap();
+
 }
