@@ -10,11 +10,11 @@ fn main()
 
 
     // Iterate over all pixels in the image.
-    for (_x, _y, pixel) in img.enumerate_pixels_mut() 
+    for pixel in img.pixels_mut() 
     {
         *pixel = image::Rgb([255, 0, 0]);
     }
     
-    img.save("test.png").unwrap();
+    img.save("RustyBeauty.png").unwrap();
 
 }
