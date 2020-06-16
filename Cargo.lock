@@ -126,6 +126,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.8.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b00572b5b10070ac495be20a25b4c8d379d20bcdec8ea0c870022b620ec79b20"
+
+[[package]]
 name = "hermit-abi"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -295,6 +301,7 @@ dependencies = [
 name = "raytracer"
 version = "0.1.0"
 dependencies = [
+ "glam",
  "image",
 ]
 
