@@ -38,6 +38,11 @@ impl Ray
             direction: ray.direction,
         }
     }
+
+    fn along(&self, t: f32) -> Vec3
+    {
+        self.position + self.direction * t
+    }
 }
 
 fn main()
@@ -47,7 +52,8 @@ fn main()
     let mut img: RgbImage = ImageBuffer::new(width, height);
 
 
-    // Iterate over all pixels in the image.
+
+
     for pixel in img.pixels_mut() 
     {
         *pixel = image::Rgb([255, 0, 0]);
