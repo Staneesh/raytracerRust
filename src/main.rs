@@ -10,6 +10,36 @@ struct Ray
     direction: Vec3,
 }
 
+impl Ray
+{
+    fn init(position: Vec3, direction: Vec3) -> Ray
+    {
+        Ray
+        {
+            position,
+            direction,
+        }
+    }
+
+    fn new() -> Ray
+    {
+        Ray
+        {
+            position: Vec3::new(1.0, 0.0, 0.0),
+            direction: Vec3::new(0.0, 0.0, -1.0),
+        }
+    }
+
+    fn from(ray: Ray) -> Ray
+    {
+        Ray
+        {
+            position: ray.position,
+            direction: ray.direction,
+        }
+    }
+}
+
 fn main()
 {
     let width = 512;
