@@ -62,6 +62,11 @@ where T:
     a * (1.0 - t) + b * t
 }
 
+fn ray_cast(ray: Ray) -> (u8, u8, u8)
+{
+    (255, 123, 14)
+}
+
 fn main()
 {
     let width = 512;
@@ -104,9 +109,14 @@ fn main()
 
         let current_pixel = Vec3::new(new_x, new_y, new_z);
 
+        let current_ray = Ray::new(camera.position,
+                               current_pixel - camera.position);
 
-        *pixel = image::Rgb([lerp(0 as f32, 255 as f32, u) as u8,
-        lerp(0 as f32, 255 as f32, v) as u8, 0]);
+        let (color_x, color_y, color_z) = ray_cast(current_ray);
+        *pixel = image::Rgb([color_x, color_y, color_z]);
+
+        //*pixel = image::Rgb([lerp(0 as f32, 255 as f32, u) as u8,
+        //lerp(0 as f32, 255 as f32, v) as u8, 0]);
     }
     
     img.save("RustyBeauty.png").unwrap();
