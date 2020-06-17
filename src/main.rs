@@ -21,30 +21,12 @@ struct Camera
 
 impl Ray
 {
-    fn init(position: Vec3, direction: Vec3) -> Ray
+    fn new(position: Vec3, direction: Vec3) -> Ray
     {
         Ray
         {
             position,
             direction,
-        }
-    }
-
-    fn new() -> Ray
-    {
-        Ray
-        {
-            position: Vec3::new(0.0, 0.0, 0.0),
-            direction: Vec3::new(0.0, 0.0, 0.0),
-        }
-    }
-
-    fn from(ray: Ray) -> Ray
-    {
-        Ray
-        {
-            position: ray.position,
-            direction: ray.direction,
         }
     }
 
@@ -56,7 +38,7 @@ impl Ray
 
 impl Camera
 {
-    fn init(position: Vec3, direction: Vec3,
+    fn new(position: Vec3, direction: Vec3,
             canvas_dimensions: Vec2, canvas_distance: f32) -> Camera
     {
         Camera
@@ -66,28 +48,18 @@ impl Camera
         }
     }
 
-    fn new() -> Camera
+    fn canvas_origin(&self) -> Vec3
     {
-        Camera
-        {
-            position: Vec3::new(2.0, 0.0, 0.0),
-            direction: Vec3::new(0.0, 0.0, -1.0),
-            canvas_dimensions: Vec2::new(1.0, 1.0),
-            canvas_distance: 1.0,
-        }
+        self.position + self.direction * self.canvas_distance
     }
+}
 
-    fn from(camera: Camera) -> Camera
-    {
-        Camera
-        {
-            position: camera.position,
-            direction: camera.direction,
-            canvas_dimensions: camera.canvas_dimensions,
-            canvas_distance: camera.canvas_distance,
-        }
-    }
-
+fn lerp<T>(a: T, b: T, t: f32) -> T
+where T:
+    std::ops::Mul<f32, Output=T> + 
+    std::ops::Add<T, Output=T>
+{
+    a * (1.0 - t) + b * t
 }
 
 fn main()
@@ -98,12 +70,43 @@ fn main()
 
     let mut img: RgbImage = ImageBuffer::new(width, height);
 
-      
+    let camera = Camera::new(
+        Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0),
+        Vec2::new(aspect_ratio, 1.0), 1.0
+        );   
 
 
-    for pixel in img.pixels_mut() 
+    // TODO(stanisz): this only works if camera.direction
+    // == (0, 0, -1)!
+    let lower_left_canvas = camera.canvas_origin() - 
+        Vec3::new(camera.canvas_dimensions.x() as f32 / 2 as f32,
+                  camera.canvas_dimensions.y() as f32 / 2 as f32,
+                  0.0);
+
+    let upper_right_canvas = lower_left_canvas + 
+        Vec3::new(camera.canvas_dimensions.x(), 
+                  camera.canvas_dimensions.y(),
+                  0.0);
+
+    for (x, y, pixel) in img.enumerate_pixels_mut() 
     {
-        *pixel = image::Rgb([255, 0, 0]);
+        let u = x as f32 / (width-1) as f32;
+        let v = y as f32 / (height-1) as f32;
+
+        let new_x = lerp(lower_left_canvas.x(),
+                        upper_right_canvas.x(),
+                        u);
+        let new_y = lerp(lower_left_canvas.y(),
+                        upper_right_canvas.y(),
+                        v);
+                                
+        let new_z = lower_left_canvas.z();
+
+        let current_pixel = Vec3::new(new_x, new_y, new_z);
+
+
+        *pixel = image::Rgb([lerp(0 as f32, 255 as f32, u) as u8,
+        lerp(0 as f32, 255 as f32, v) as u8, 0]);
     }
     
     img.save("RustyBeauty.png").unwrap();
