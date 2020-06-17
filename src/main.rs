@@ -19,6 +19,13 @@ struct Camera
     canvas_distance: f32,
 }
 
+#[derive(Debug)]
+struct Sphere
+{
+    position: Vec3,
+    radius: f32
+}
+
 impl Ray
 {
     fn new(position: Vec3, direction: Vec3) -> Ray
@@ -33,6 +40,19 @@ impl Ray
     fn along(&self, t: f32) -> Vec3
     {
         self.position + self.direction * t
+    }
+
+    fn hit_sphere(&self, sphere: &Sphere) -> bool
+    {
+        let ray_to_sphere_center = self.position - sphere.position;
+        let a = Vec3::dot(self.direction, self.direction);
+        let b = 2.0 * Vec3::dot(ray_to_sphere_center, self.direction);
+        let c = Vec3::dot(ray_to_sphere_center, ray_to_sphere_center) -
+            sphere.radius * sphere.radius;
+
+        let discriminant = b * b - 4.0 * a * c;
+
+        discriminant >= 0.0
     }
 }
 
@@ -54,6 +74,17 @@ impl Camera
     }
 }
 
+impl Sphere
+{
+    fn new(position: Vec3, radius: f32) -> Sphere
+    {
+        Sphere
+        {
+            position, radius
+        }
+    }
+}
+
 fn lerp<T>(a: T, b: T, t: f32) -> T
 where T:
     std::ops::Mul<f32, Output=T> + 
@@ -64,7 +95,13 @@ where T:
 
 fn ray_cast(ray: Ray) -> (u8, u8, u8)
 {
-    (255, 123, 14)
+    let test_sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 2.0);
+    if ray.hit_sphere(&test_sphere)
+    {
+        return (255, 123, 14)
+    }
+
+    return (0, 0, 0)
 }
 
 fn main()
