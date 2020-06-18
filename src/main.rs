@@ -130,8 +130,25 @@ fn main()
                   camera.canvas_dimensions.y(),
                   0.0);
 
+    let debug_display_scanlines_multiple = 16;
+
     for (x, y, pixel) in img.enumerate_pixels_mut() 
     {
+        if x == 0 &&
+            y % debug_display_scanlines_multiple == 0 
+        {
+            if y == height - debug_display_scanlines_multiple
+            {
+                println!("Scanning lines: {} - {}", 
+                         y, height)
+            }
+            else
+            {
+                println!("Scanning lines: {} - {}", 
+                         y, y + debug_display_scanlines_multiple - 1)
+            }
+        }
+        
         let u = x as f32 / (width-1) as f32;
         let v = y as f32 / (height-1) as f32;
 
