@@ -26,6 +26,14 @@ struct Sphere
     radius: f32
 }
 
+#[derive(Debug)]
+struct Window
+{
+    width: u32,
+    height: u32,
+    aspect_ratio: f32
+}
+
 impl Ray
 {
     fn new(position: Vec3, direction: Vec3) -> Ray
@@ -85,6 +93,18 @@ impl Sphere
     }
 }
 
+impl Window
+{
+    fn new(width: u32, height: u32) -> Window
+    {
+        Window
+        {
+            width, height,
+            aspect_ratio: width as f32 / height as f32,
+        }
+    }
+}
+
 fn lerp<T>(a: T, b: T, t: f32) -> T
 where T:
     std::ops::Mul<f32, Output=T> + 
@@ -106,15 +126,14 @@ fn ray_cast(ray: Ray) -> (u8, u8, u8)
 
 fn main()
 {
-    let width = 512;
-    let height = 512;
-    let aspect_ratio = width as f32 / height as f32;
+    let window = Window::new(512, 512);
 
-    let mut img: RgbImage = ImageBuffer::new(width, height);
+    let mut img: RgbImage = ImageBuffer::new(window.width, 
+                                             window.height);
 
     let camera = Camera::new(
         Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0),
-        Vec2::new(aspect_ratio, 1.0), 1.0
+        Vec2::new(window.aspect_ratio, 1.0), 1.0
         );   
 
 
@@ -134,13 +153,17 @@ fn main()
 
     for (x, y, pixel) in img.enumerate_pixels_mut() 
     {
+        // NOTE(stanisz): Logging info informing about progress
+        // of raytracing horizontal lines of an image.
+        // 'debug_display_scanlines_multiple' variable 
+        // is storing information about the frequency of prints.
         if x == 0 &&
             y % debug_display_scanlines_multiple == 0 
         {
-            if y == height - debug_display_scanlines_multiple
+            if y == window.height - debug_display_scanlines_multiple
             {
                 println!("Scanning lines: {} - {}", 
-                         y, height)
+                         y, window.height)
             }
             else
             {
@@ -148,9 +171,10 @@ fn main()
                          y, y + debug_display_scanlines_multiple - 1)
             }
         }
-        
-        let u = x as f32 / (width-1) as f32;
-        let v = y as f32 / (height-1) as f32;
+        // --- End debug info.
+
+        let u = x as f32 / (window.width-1) as f32;
+        let v = y as f32 / (window.height-1) as f32;
 
         let new_x = lerp(lower_left_canvas.x(),
                         upper_right_canvas.x(),
