@@ -62,14 +62,14 @@ impl Ray
         if discriminant >= 0.0
         {
             let discriminant_sqrt = discriminant.sqrt();
-            let t1 = (-b - discriminant_sqrt) / (2.0 * a);
-            let t2 = (-b + discriminant_sqrt) / (2.0 * a);
+            let t1 = max_f32(
+                (-b - discriminant_sqrt) / (2.0 * a), 0.0
+                );
+            let t2 = max_f32(
+                (-b + discriminant_sqrt) / (2.0 * a), 0.0
+                );
 
-            let mut t = t1;
-            if t2 < t1
-            {
-                t = t2;
-            }
+            let t = min_f32(t1, t2);
 
             return Some(self.along(t))
         }
@@ -117,6 +117,21 @@ impl Window
             aspect_ratio: width as f32 / height as f32,
         }
     }
+}
+
+fn max_f32(a: f32, b: f32) -> f32
+{
+    if a > b
+    {
+        return a;
+    }
+
+    return b;   
+}
+
+fn min_f32(a: f32, b: f32) -> f32
+{
+    return -max_f32(-a, -b);
 }
 
 fn lerp<T>(a: T, b: T, t: f32) -> T
