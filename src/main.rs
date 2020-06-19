@@ -3,6 +3,8 @@ extern crate image;
 use image::{ImageBuffer, RgbImage};
 use glam::{Vec3, Vec2};
 
+use stray::raycaster::Window; 
+
 #[derive(Debug)]
 struct Ray
 {
@@ -24,14 +26,6 @@ struct Sphere
 {
     position: Vec3,
     radius: f32
-}
-
-#[derive(Debug)]
-struct Window
-{
-    width: u32,
-    height: u32,
-    aspect_ratio: f32
 }
 
 impl Ray
@@ -103,18 +97,6 @@ impl Sphere
         Sphere
         {
             position, radius
-        }
-    }
-}
-
-impl Window
-{
-    fn new(width: u32, height: u32) -> Window
-    {
-        Window
-        {
-            width, height,
-            aspect_ratio: width as f32 / height as f32,
         }
     }
 }
