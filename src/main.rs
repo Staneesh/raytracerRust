@@ -50,7 +50,7 @@ impl Ray
         self.position + self.direction * t
     }
 
-    fn hit_sphere(&self, sphere: &Sphere) -> bool
+    fn hit_sphere(&self, sphere: &Sphere) -> Option<Vec3>
     {
         let ray_to_sphere_center = self.position - sphere.position;
         let a = Vec3::dot(self.direction, self.direction);
@@ -59,8 +59,22 @@ impl Ray
             sphere.radius * sphere.radius;
 
         let discriminant = b * b - 4.0 * a * c;
+        if discriminant >= 0.0
+        {
+            let discriminant_sqrt = discriminant.sqrt();
+            let t1 = (-b - discriminant_sqrt) / (2.0 * a);
+            let t2 = (-b + discriminant_sqrt) / (2.0 * a);
 
-        discriminant >= 0.0
+            let mut t = t1;
+            if t2 < t1
+            {
+                t = t2;
+            }
+
+            return Some(self.along(t))
+        }
+        
+        return None;
     }
 }
 
@@ -116,7 +130,8 @@ where T:
 fn ray_cast(ray: Ray) -> (u8, u8, u8)
 {
     let test_sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 2.0);
-    if ray.hit_sphere(&test_sphere)
+    let hit_sphere_point = ray.hit_sphere(&test_sphere);
+    if hit_sphere_point.is_some()
     {
         return (255, 123, 14)
     }
