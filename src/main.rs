@@ -130,8 +130,7 @@ where T:
 fn ray_cast(ray: Ray) -> (u8, u8, u8)
 {
     let test_sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 2.0);
-    let hit_sphere_point = ray.hit_sphere(&test_sphere);
-    if hit_sphere_point.is_some()
+    if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
     {
         return (255, 123, 14)
     }
