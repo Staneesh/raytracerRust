@@ -147,7 +147,17 @@ fn ray_cast(ray: Ray) -> (u8, u8, u8)
     let test_sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 2.0);
     if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
     {
-        return (255, 123, 14)
+        let normal_to_sphere_surface = hit_sphere_point - 
+            test_sphere.position;
+        normal_to_sphere_surface.normalize();
+        let color_vector = Vec3::new(
+            255.0 * normal_to_sphere_surface.x(),
+            255.0 * normal_to_sphere_surface.y(),
+            255.0 * normal_to_sphere_surface.z());
+
+        return (color_vector.x() as u8,
+        color_vector.y() as u8,
+        color_vector.z() as u8);
     }
 
     return (0, 0, 0)
