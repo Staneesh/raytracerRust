@@ -1,10 +1,6 @@
-pub mod geometry;
-pub mod material;
-mod camera;
-mod ray;
-
 #[derive(Debug)]
-pub struct Window
+
+pub struct Window 
 {
     pub width: u32,
     pub height: u32,

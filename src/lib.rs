@@ -1,1 +1,1 @@
-pub mod raycaster;
+pub mod raytracer;

@@ -3,7 +3,7 @@ extern crate image;
 use image::{ImageBuffer, RgbImage};
 use glam::{Vec3, Vec2};
 
-use stray::raycaster::Window; 
+use stray::raytracer::Stray; 
 
 #[derive(Debug)]
 struct Ray
@@ -142,14 +142,17 @@ fn ray_cast(ray: Ray) -> (u8, u8, u8)
 
 fn main()
 {
-    let window = Window::new(512, 512);
+    let mut stray = Stray::new();
 
-    let mut img: RgbImage = ImageBuffer::new(window.width, 
-                                             window.height);
+    //TODO(staneesh): when dimenisons not equal image distorted!
+    stray.set_window_dimensions(512, 512);
+
+    let mut img: RgbImage = ImageBuffer::new(stray.get_window_width(), 
+                                             stray.get_window_height());
 
     let camera = Camera::new(
         Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0),
-        Vec2::new(window.aspect_ratio, 1.0), 1.0
+        Vec2::new(stray.get_aspect_ratio(), 1.0), 1.0
         );   
 
 
@@ -176,10 +179,10 @@ fn main()
         if x == 0 &&
             y % debug_display_scanlines_multiple == 0 
         {
-            if y == window.height - debug_display_scanlines_multiple
+            if y == stray.get_window_height() - debug_display_scanlines_multiple
             {
                 println!("Scanning lines: {} - {}", 
-                         y, window.height)
+                         y, stray.get_window_height())
             }
             else
             {
@@ -189,8 +192,8 @@ fn main()
         }
         // --- End debug info.
 
-        let u = x as f32 / (window.width-1) as f32;
-        let v = y as f32 / (window.height-1) as f32;
+        let u = x as f32 / (stray.get_window_width() -1) as f32;
+        let v = y as f32 / (stray.get_window_width() -1) as f32;
 
         let new_x = lerp(lower_left_canvas.x(),
                         upper_right_canvas.x(),
