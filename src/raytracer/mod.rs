@@ -49,19 +49,24 @@ impl Stray
 
     fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
     {
-        let test_sphere = self.spheres[0];
+        let mut color = (0.0, 0.0, 0.0);
 
-        if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
+        for (_index, test_sphere) in self.spheres.iter().enumerate()
         {
-            let normal_to_sphere_surface = (hit_sphere_point - 
-                test_sphere.position).normalize();
+            if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
+            {
+                let normal_to_sphere_surface = (hit_sphere_point - 
+                    test_sphere.position).normalize();
 
-            let red = lerp::<f32>(0.0, 255.0, Vec3::dot(normal_to_sphere_surface, 
-                                                  ray.direction));
-            return (red as u8, 100, 100);
+                let red = lerp::<f32>(0.0, 255.0, Vec3::dot(normal_to_sphere_surface, 
+                                                      ray.direction));
+                color.0 += red;
+                color.1 += 100.0;
+                color.2 += 100.0;
+            }
         }
 
-        return (0, 0, 0)
+        return (color.0 as u8, color.1 as u8, color.2 as u8);
     }
 
     pub fn render_scence(&self) 
