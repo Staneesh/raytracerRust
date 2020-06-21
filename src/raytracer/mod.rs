@@ -38,26 +38,6 @@ impl Stray
         self.window = Window::new(width, height);
     }
 
-    fn get_lower_left_canvas(&self) -> Vec3
-    {
-        // TODO(stanisz): this only works if camera.direction
-        // == (0, 0, -1)!
-        self.camera.canvas_origin() - 
-            Vec3::new(self.camera.canvas_dimensions.x() as f32 /2.0,
-            self.camera.canvas_dimensions.y() as f32 / 2.0,
-            0.0)
-    }
-
-    fn get_upper_right_canvas(&self) -> Vec3
-    {
-        // TODO(stanisz): this only works if camera.direction
-        // == (0, 0, -1)!
-        self.get_lower_left_canvas() +
-            Vec3::new(self.camera.canvas_dimensions.x(),
-            self.camera.canvas_dimensions.y(),
-            0.0)
-    }
-
     fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
     {
         let test_sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 2.0);
@@ -105,14 +85,14 @@ impl Stray
             let u = x as f32 / (self.window.width -1) as f32;
             let v = y as f32 / (self.window.width -1) as f32;
 
-            let new_x = lerp(self.get_lower_left_canvas().x(),
-                            self.get_upper_right_canvas().x(),
+            let new_x = lerp(self.camera.get_lower_left_canvas().x(),
+                            self.camera.get_upper_right_canvas().x(),
                             u);
-            let new_y = lerp(self.get_lower_left_canvas().y(),
-                            self.get_upper_right_canvas().y(),
+            let new_y = lerp(self.camera.get_lower_left_canvas().y(),
+                            self.camera.get_upper_right_canvas().y(),
                             v);
                                     
-            let new_z = self.get_lower_left_canvas().z();
+            let new_z = self.camera.get_lower_left_canvas().z();
 
             let current_pixel = Vec3::new(new_x, new_y, new_z);
 

@@ -21,8 +21,29 @@ impl Camera
         }
     }
 
-    pub fn canvas_origin(&self) -> Vec3
+    pub fn get_canvas_origin(&self) -> Vec3
     {
         self.position + self.direction * self.canvas_distance
     }
+
+    pub fn get_lower_left_canvas(&self) -> Vec3
+    {
+        // TODO(stanisz): this only works if camera.direction
+        // == (0, 0, -1)!
+        self.get_canvas_origin() - 
+            Vec3::new(self.canvas_dimensions.x() as f32 /2.0,
+            self.canvas_dimensions.y() as f32 / 2.0,
+            0.0)
+    }
+
+    pub fn get_upper_right_canvas(&self) -> Vec3
+    {
+        // TODO(stanisz): this only works if camera.direction
+        // == (0, 0, -1)!
+        self.get_lower_left_canvas() +
+            Vec3::new(self.canvas_dimensions.x(),
+            self.canvas_dimensions.y(),
+            0.0)
+    }
+
 }
