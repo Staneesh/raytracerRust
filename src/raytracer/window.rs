@@ -1,5 +1,4 @@
 #[derive(Debug)]
-
 pub struct Window 
 {
     pub width: u32,

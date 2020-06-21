@@ -13,15 +13,6 @@ struct Ray
 }
 
 #[derive(Debug)]
-struct Camera
-{
-    position: Vec3,
-    direction: Vec3,
-    canvas_dimensions: Vec2,
-    canvas_distance: f32,
-}
-
-#[derive(Debug)]
 struct Sphere
 {
     position: Vec3,
@@ -72,23 +63,6 @@ impl Ray
     }
 }
 
-impl Camera
-{
-    fn new(position: Vec3, direction: Vec3,
-            canvas_dimensions: Vec2, canvas_distance: f32) -> Camera
-    {
-        Camera
-        {
-            position, direction,
-            canvas_dimensions, canvas_distance, 
-        }
-    }
-
-    fn canvas_origin(&self) -> Vec3
-    {
-        self.position + self.direction * self.canvas_distance
-    }
-}
 
 impl Sphere
 {
@@ -145,28 +119,12 @@ fn main()
     let mut stray = Stray::new();
 
     //TODO(staneesh): when dimenisons not equal image distorted!
-    stray.set_window_dimensions(512, 512);
+    //stray.set_window_dimensions(1024, 512);
 
     let mut img: RgbImage = ImageBuffer::new(stray.get_window_width(), 
                                              stray.get_window_height());
 
-    let camera = Camera::new(
-        Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0),
-        Vec2::new(stray.get_aspect_ratio(), 1.0), 1.0
-        );   
 
-
-    // TODO(stanisz): this only works if camera.direction
-    // == (0, 0, -1)!
-    let lower_left_canvas = camera.canvas_origin() - 
-        Vec3::new(camera.canvas_dimensions.x() as f32 / 2 as f32,
-                  camera.canvas_dimensions.y() as f32 / 2 as f32,
-                  0.0);
-
-    let upper_right_canvas = lower_left_canvas + 
-        Vec3::new(camera.canvas_dimensions.x(), 
-                  camera.canvas_dimensions.y(),
-                  0.0);
 
     let debug_display_scanlines_multiple = 16;
 
@@ -195,19 +153,19 @@ fn main()
         let u = x as f32 / (stray.get_window_width() -1) as f32;
         let v = y as f32 / (stray.get_window_width() -1) as f32;
 
-        let new_x = lerp(lower_left_canvas.x(),
-                        upper_right_canvas.x(),
+        let new_x = lerp(stray.get_lower_left_canvas().x(),
+                        stray.get_upper_right_canvas().x(),
                         u);
-        let new_y = lerp(lower_left_canvas.y(),
-                        upper_right_canvas.y(),
+        let new_y = lerp(stray.get_lower_left_canvas().y(),
+                        stray.get_upper_right_canvas().y(),
                         v);
                                 
-        let new_z = lower_left_canvas.z();
+        let new_z = stray.get_lower_left_canvas().z();
 
         let current_pixel = Vec3::new(new_x, new_y, new_z);
 
-        let current_ray = Ray::new(camera.position,
-                               current_pixel - camera.position);
+        let current_ray = Ray::new(stray.get_camera_position(),
+                               current_pixel - stray.get_camera_position());
 
         let (color_x, color_y, color_z) = ray_cast(current_ray);
         *pixel = image::Rgb([color_x, color_y, color_z]);
