@@ -10,7 +10,7 @@ use ray::Ray;
 use geometry::sphere::Sphere;
 
 use glam::{Vec2, Vec3};
-use image::{ImageBuffer, RgbImage};
+use image::{ImageBuffer};
 
 pub struct Stray
 {
@@ -37,23 +37,8 @@ impl Stray
     {
         self.window = Window::new(width, height);
     }
-    pub fn get_window_dimensions(&self) -> (u32, u32)
-    {
-        (self.window.width, self.window.height)
-    }
-    pub fn get_window_width(&self) -> u32
-    {
-        self.window.width
-    }
-    pub fn get_window_height(&self) -> u32
-    {
-        self.window.height
-    }
-    pub fn get_aspect_ratio(&self) -> f32
-    {
-        self.window.aspect_ratio
-    }
-    pub fn get_lower_left_canvas(&self) -> Vec3
+
+    fn get_lower_left_canvas(&self) -> Vec3
     {
         // TODO(stanisz): this only works if camera.direction
         // == (0, 0, -1)!
@@ -62,7 +47,8 @@ impl Stray
             self.camera.canvas_dimensions.y(),
             0.0)
     }
-    pub fn get_upper_right_canvas(&self) -> Vec3
+
+    fn get_upper_right_canvas(&self) -> Vec3
     {
         // TODO(stanisz): this only works if camera.direction
         // == (0, 0, -1)!
@@ -71,11 +57,7 @@ impl Stray
             self.camera.canvas_dimensions.y(),
             0.0)
     }
-    pub fn get_camera_position(&self) -> Vec3
-    {
-        self.camera.position
-    }
-    
+
     fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
     {
         let test_sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 2.0);
