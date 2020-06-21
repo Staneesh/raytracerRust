@@ -1,5 +1,5 @@
-pub mod geometry;
-pub mod material;
+mod geometry;
+mod material;
 mod camera;
 mod ray;
 mod window;
@@ -43,8 +43,8 @@ impl Stray
         // TODO(stanisz): this only works if camera.direction
         // == (0, 0, -1)!
         self.camera.canvas_origin() - 
-            Vec3::new(self.camera.canvas_dimensions.x(),
-            self.camera.canvas_dimensions.y(),
+            Vec3::new(self.camera.canvas_dimensions.x() as f32 /2.0,
+            self.camera.canvas_dimensions.y() as f32 / 2.0,
             0.0)
     }
 

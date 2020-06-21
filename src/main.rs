@@ -10,8 +10,6 @@ fn main()
     //TODO(staneesh): when dimenisons not equal image distorted!
     //stray.set_window_dimensions(1024, 512);
 
-    //TODO(staneesh): rendering messed up after moving code
-    // out of main.rs
     stray.render_scence();    
 
 }
