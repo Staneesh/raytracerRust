@@ -7,6 +7,7 @@ mod window;
 use window::Window;
 use camera::Camera;
 use ray::Ray;
+use material::Material;
 use geometry::sphere::Sphere;
 
 use glam::{Vec2, Vec3};
@@ -17,6 +18,7 @@ pub struct Stray
     window: Window,
     camera: Camera,
     spheres: Vec<Sphere>,
+    materials: Vec<(Material, u32)>,
 }
 
 impl Stray
@@ -34,6 +36,7 @@ impl Stray
             //TODO(staneesh): should this be initialized
             // using with_capacity?
             spheres: Vec::<Sphere>::new(),
+            materials: Vec::<(Material, u32)>::new(),
         }
     }
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
@@ -47,6 +50,15 @@ impl Stray
         self.spheres.push(sphere);
     }
 
+    pub fn add_material(&mut self,
+                        diffuse_r: f32, diffuse_g: f32, diffuse_b: f32,
+                        shininess: f32, mat_index: u32)
+    {
+        let material = Material::new(diffuse_r, diffuse_g, diffuse_b,
+                                     shininess);
+        self.materials.push((material, mat_index));
+    }
+    
     fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
     {
         let mut color = (0.0, 0.0, 0.0);

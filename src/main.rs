@@ -7,6 +7,7 @@ fn main()
     // before drawing the scene.
     let mut stray = Stray::new();
 
+    stray.add_material(1.0, 0.0, 0.0, 0.5, 0);
     stray.add_sphere(0.0, -1.0, -5.0, 2.0);
     stray.add_sphere(0.0, 1.0, -5.0, 2.0);
 
