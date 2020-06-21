@@ -1,6 +1,8 @@
 use glam::{Vec3};
 
-#[derive(Debug)]
+//NOTE(staneesh): Copy and Clone for 
+// pushing to vec<Sphere> in Stray.
+#[derive(Debug, Copy, Clone)]
 pub struct Sphere
 {
     //TODO(staneesh): shouldnt be pub

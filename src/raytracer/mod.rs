@@ -16,10 +16,9 @@ pub struct Stray
 {
     window: Window,
     camera: Camera,
+    spheres: Vec<Sphere>,
 }
 
-// TODO(staneesh): i shouldnt have getters at all,
-// some of the functions neednt be public, 
 impl Stray
 {
     pub fn new() -> Stray
@@ -31,6 +30,10 @@ impl Stray
                 Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0),
                 Vec2::new(1.0, 1.0), 1.0
                 ),
+
+            //TODO(staneesh): should this be initialized
+            // using with_capacity?
+            spheres: Vec::<Sphere>::new(),
         }
     }
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
@@ -38,9 +41,16 @@ impl Stray
         self.window = Window::new(width, height);
     }
 
+    pub fn add_sphere(&mut self, x: f32, y: f32, z: f32, r: f32)
+    {
+        let sphere = Sphere::new(Vec3::new(x, y, z), r);
+        self.spheres.push(sphere);
+    }
+
     fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
     {
-        let test_sphere = Sphere::new(Vec3::new(0.0, 0.0, -5.0), 2.0);
+        let test_sphere = self.spheres[0];
+
         if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
         {
             let normal_to_sphere_surface = (hit_sphere_point - 
