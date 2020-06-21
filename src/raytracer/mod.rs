@@ -58,6 +58,20 @@ impl Stray
                                      shininess);
         self.materials.push((material, mat_index));
     }
+   
+    fn find_material_by_index(&self, mat_index: &u32) -> Option<Material>
+    {
+        for (_position, (current_material, cur_mat_index)) in
+            self.materials.iter().enumerate()
+        {
+            if cur_mat_index == mat_index
+            {
+                return Some(*current_material);
+            }
+        }
+
+        return None;
+    }
     
     fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
     {

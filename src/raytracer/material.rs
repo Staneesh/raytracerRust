@@ -1,6 +1,6 @@
 use glam::{Vec3};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Material
 {
     pub diffuse_color: Vec3,
