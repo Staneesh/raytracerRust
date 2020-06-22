@@ -17,7 +17,10 @@ pub struct Stray
 {
     window: Window,
     camera: Camera,
-    spheres: Vec<Sphere>,
+
+    //NOTE(staneesh): sphere and its material index
+    spheres: Vec<(Sphere, u32)>,
+    //NOTE(staneesh): material and its index    
     materials: Vec<(Material, u32)>,
 }
 
@@ -35,7 +38,7 @@ impl Stray
 
             //TODO(staneesh): should this be initialized
             // using with_capacity?
-            spheres: Vec::<Sphere>::new(),
+            spheres: Vec::<(Sphere, u32)>::new(),
             materials: Vec::<(Material, u32)>::new(),
         }
     }
@@ -44,19 +47,35 @@ impl Stray
         self.window = Window::new(width, height);
     }
 
-    pub fn add_sphere(&mut self, x: f32, y: f32, z: f32, r: f32)
+    pub fn add_sphere(&mut self, x: f32, y: f32, z: f32, r: f32,
+                      mat_index: u32) -> Result<(), &'static str>
     {
         let sphere = Sphere::new(Vec3::new(x, y, z), r);
-        self.spheres.push(sphere);
+        if self.find_material_by_index(&mat_index).is_none()
+        {
+            return Err("No material of such index!");
+        }
+        
+        self.spheres.push((sphere, mat_index));
+        return Ok(());
     }
 
     pub fn add_material(&mut self,
                         diffuse_r: f32, diffuse_g: f32, diffuse_b: f32,
                         shininess: f32, mat_index: u32)
+        -> Result<(), &'static str>
     {
+        if self.find_material_by_index(&mat_index).is_some()
+        {
+            return Err("Cannot add another \
+                       material with the same index!");
+        }
+        
         let material = Material::new(diffuse_r, diffuse_g, diffuse_b,
                                      shininess);
         self.materials.push((material, mat_index));
+
+        return Ok(());
     }
    
     fn find_material_by_index(&self, mat_index: &u32) -> Option<Material>
@@ -79,10 +98,10 @@ impl Stray
 
         for (_index, test_sphere) in self.spheres.iter().enumerate()
         {
-            if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
+            if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere.0)
             {
                 let normal_to_sphere_surface = (hit_sphere_point - 
-                    test_sphere.position).normalize();
+                    test_sphere.0.position).normalize();
 
                 let red = lerp::<f32>(0.0, 255.0, Vec3::dot(normal_to_sphere_surface, 
                                                       ray.direction));
