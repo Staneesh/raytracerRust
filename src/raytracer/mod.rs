@@ -22,6 +22,8 @@ pub struct Stray
     spheres: Vec<(Sphere, u32)>,
     //NOTE(staneesh): material and its index    
     materials: Vec<(Material, u32)>,
+
+    tracing_depth: u32,
 }
 
 impl Stray
@@ -40,6 +42,7 @@ impl Stray
             // using with_capacity?
             spheres: Vec::<(Sphere, u32)>::new(),
             materials: Vec::<(Material, u32)>::new(),
+            tracing_depth: 5,
         }
     }
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
@@ -93,9 +96,16 @@ impl Stray
         return None;
     }
     
-    fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
+    fn ray_cast(&self, ray: Ray, cur_depth: u32,
+                ray_energy: Vec3) -> Vec3
     {
-        let color = (0.0, 0.0, 0.0);
+        if cur_depth > self.tracing_depth
+        {
+            return Vec3::new(0.0, 0.0, 0.0);
+        }
+        
+        let mut color = Vec3::new(0.0, 0.0, 0.0);
+        let mut ray_energy = Vec3::new(1.0, 1.0, 1.0);
 
         for (_index, (test_sphere, mat_index)) 
             in self.spheres.iter().enumerate()
@@ -105,7 +115,7 @@ impl Stray
                 let normal_to_sphere_surface = (hit_sphere_point - 
                     test_sphere.position).normalize();
 
-                let mut contrib = Vec3::dot(
+                let contrib = Vec3::dot(
                     ray.direction.normalize(),
                     normal_to_sphere_surface
                         );
@@ -113,18 +123,29 @@ impl Stray
                 let material_hit = 
                     self.find_material_by_index(mat_index).unwrap();
 
-                let diffuse_lighting = contrib * 255.0 * 
+                let diffuse_lighting = contrib *  
                     material_hit.diffuse_color;    
 
-                return (
-                    diffuse_lighting.x() as u8,
-                    diffuse_lighting.y() as u8,
-                    diffuse_lighting.z() as u8
-                    )
+                color = color + hadamard(&(255.0 * diffuse_lighting),
+                                         &ray_energy);
+
+                ray_energy = hadamard(&ray_energy, &diffuse_lighting);
+
+                let prefect_reflection = ray.direction - 
+                    2.0*(contrib) * normal_to_sphere_surface;
+
+                let new_dir = lerp::<Vec3>(
+                    random_in_unit_sphere(), prefect_reflection,
+                    material_hit.shininess);
+
+                let new_ray = Ray::new(hit_sphere_point, new_dir);
+
+                color = color + self.ray_cast(new_ray, cur_depth + 1,
+                                         ray_energy);
             }
         }
 
-        return (color.0 as u8, color.1 as u8, color.2 as u8);
+        return color; 
     }
 
     pub fn render_scence(&self) 
@@ -172,7 +193,13 @@ impl Stray
             let current_ray = Ray::new(self.camera.position,
                                    current_pixel - self.camera.position);
 
-            let (color_x, color_y, color_z) = self.ray_cast(current_ray);
+            let pixel_color =
+                self.ray_cast(current_ray, 1, Vec3::one());
+            let (color_x, color_y, color_z) = (
+                pixel_color.x() as u8,
+                pixel_color.y() as u8,
+                pixel_color.z() as u8 );
+
             *pixel = image::Rgb([color_x, color_y, color_z]);
 
             //*pixel = image::Rgb([lerp(0 as f32, 255 as f32, u) as u8,
@@ -200,4 +227,10 @@ fn hadamard(a: &Vec3, b: &Vec3) -> Vec3
         );
 
     return result;
+}
+
+//TODO(staneesh): implement this
+fn random_in_unit_sphere() -> Vec3
+{
+    return Vec3::one();
 }
