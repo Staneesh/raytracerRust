@@ -1,3 +1,5 @@
+extern crate rand;
+
 mod geometry;
 mod material;
 mod camera;
@@ -96,55 +98,50 @@ impl Stray
         return None;
     }
     
-    fn ray_cast(&self, ray: Ray, cur_depth: u32,
-                ray_energy: Vec3) -> Vec3
+    fn ray_cast(&self, ray_pass: &Ray) -> Vec3
     {
-        if cur_depth > self.tracing_depth
-        {
-            return Vec3::new(0.0, 0.0, 0.0);
-        }
-        
+        let mut ray: Ray = *ray_pass;
         let mut color = Vec3::new(0.0, 0.0, 0.0);
         let mut ray_energy = Vec3::new(1.0, 1.0, 1.0);
 
-        for (_index, (test_sphere, mat_index)) 
-            in self.spheres.iter().enumerate()
+        for _bounce_index in 1..self.tracing_depth + 1
         {
-            if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
+            for (_index, (test_sphere, mat_index)) 
+                in self.spheres.iter().enumerate()
             {
-                let normal_to_sphere_surface = (hit_sphere_point - 
-                    test_sphere.position).normalize();
+                if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
+                {
+                    let normal_to_sphere_surface = (hit_sphere_point - 
+                        test_sphere.position).normalize();
 
-                let contrib = Vec3::dot(
-                    ray.direction.normalize(),
-                    normal_to_sphere_surface
-                        );
+                    let contrib = Vec3::dot(
+                        ray.direction.normalize(),
+                        normal_to_sphere_surface
+                            );
 
-                let material_hit = 
-                    self.find_material_by_index(mat_index).unwrap();
+                    let material_hit = 
+                        self.find_material_by_index(mat_index).unwrap();
 
-                let diffuse_lighting = contrib *  
-                    material_hit.diffuse_color;    
+                    let diffuse_lighting = hadamard(&(contrib *  
+                        material_hit.diffuse_color), &ray_energy);    
 
-                color = color + hadamard(&(255.0 * diffuse_lighting),
-                                         &ray_energy);
+                    color = color + diffuse_lighting; 
 
-                ray_energy = hadamard(&ray_energy, &diffuse_lighting);
+                    ray_energy = hadamard(&ray_energy, &diffuse_lighting);
 
-                let prefect_reflection = ray.direction - 
-                    2.0*(contrib) * normal_to_sphere_surface;
+                    let prefect_reflection = ray.direction - 
+                        2.0*(contrib) * normal_to_sphere_surface;
 
-                let new_dir = lerp::<Vec3>(
-                    random_in_unit_sphere(), prefect_reflection,
-                    material_hit.shininess);
+                    let new_dir = lerp::<Vec3>(
+                        random_in_unit_sphere(), prefect_reflection,
+                        material_hit.shininess);
 
-                let new_ray = Ray::new(hit_sphere_point, new_dir);
-
-                color = color + self.ray_cast(new_ray, cur_depth + 1,
-                                         ray_energy);
+                    let new_ray = Ray::new(hit_sphere_point, new_dir);
+                    ray = new_ray;
+                }
             }
         }
-
+        
         return color; 
     }
 
@@ -194,7 +191,7 @@ impl Stray
                                    current_pixel - self.camera.position);
 
             let pixel_color =
-                self.ray_cast(current_ray, 1, Vec3::one());
+                self.ray_cast(&current_ray);
             let (color_x, color_y, color_z) = (
                 pixel_color.x() as u8,
                 pixel_color.y() as u8,
@@ -229,8 +226,22 @@ fn hadamard(a: &Vec3, b: &Vec3) -> Vec3
     return result;
 }
 
-//TODO(staneesh): implement this
+fn random0_1() -> f32
+{
+    return rand::random::<f32>() / std::f32::MAX;
+}
+
+fn random_range(a: f32, b: f32) -> f32
+{
+    return random0_1() * (b - a) + a;
+}
+
+//TODO(staneesh): read about this
 fn random_in_unit_sphere() -> Vec3
 {
-    return Vec3::one();
+    let a = random_range(0.0, 2.0 * 3.1415);
+    let z = random_range(-1.0, 1.0);
+    let r = (1.0 - z * z).sqrt();
+    return Vec3::new(r * a.cos(), r * a.sin(), z);
+
 }

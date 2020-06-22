@@ -1,7 +1,7 @@
 use glam::{Vec3};
 use super::geometry::sphere::Sphere;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Ray
 {
     position: Vec3,
