@@ -96,12 +96,13 @@ impl Stray
     {
         let mut color = (0.0, 0.0, 0.0);
 
-        for (_index, test_sphere) in self.spheres.iter().enumerate()
+        for (_index, (test_sphere, _mat_index)) 
+            in self.spheres.iter().enumerate()
         {
-            if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere.0)
+            if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
             {
                 let normal_to_sphere_surface = (hit_sphere_point - 
-                    test_sphere.0.position).normalize();
+                    test_sphere.position).normalize();
 
                 let red = lerp::<f32>(0.0, 255.0, Vec3::dot(normal_to_sphere_surface, 
                                                       ray.direction));
