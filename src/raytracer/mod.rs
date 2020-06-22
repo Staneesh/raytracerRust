@@ -48,7 +48,8 @@ impl Stray
     }
 
     pub fn add_sphere(&mut self, x: f32, y: f32, z: f32, r: f32,
-                      mat_index: u32) -> Result<(), &'static str>
+                      mat_index: u32)
+        -> Result<(), &'static str>
     {
         let sphere = Sphere::new(Vec3::new(x, y, z), r);
         if self.find_material_by_index(&mat_index).is_none()
@@ -94,9 +95,9 @@ impl Stray
     
     fn ray_cast(&self, ray: Ray) -> (u8, u8, u8)
     {
-        let mut color = (0.0, 0.0, 0.0);
+        let color = (0.0, 0.0, 0.0);
 
-        for (_index, (test_sphere, _mat_index)) 
+        for (_index, (test_sphere, mat_index)) 
             in self.spheres.iter().enumerate()
         {
             if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
@@ -104,11 +105,22 @@ impl Stray
                 let normal_to_sphere_surface = (hit_sphere_point - 
                     test_sphere.position).normalize();
 
-                let red = lerp::<f32>(0.0, 255.0, Vec3::dot(normal_to_sphere_surface, 
-                                                      ray.direction));
-                color.0 += red;
-                color.1 += 100.0;
-                color.2 += 100.0;
+                let mut contrib = Vec3::dot(
+                    ray.direction.normalize(),
+                    normal_to_sphere_surface
+                        );
+
+                let material_hit = 
+                    self.find_material_by_index(mat_index).unwrap();
+
+                let diffuse_lighting = contrib * 255.0 * 
+                    material_hit.diffuse_color;    
+
+                return (
+                    diffuse_lighting.x() as u8,
+                    diffuse_lighting.y() as u8,
+                    diffuse_lighting.z() as u8
+                    )
             }
         }
 
@@ -179,3 +191,13 @@ where T:
     a * (1.0 - t) + b * t
 }
 
+fn hadamard(a: &Vec3, b: &Vec3) -> Vec3
+{
+    let result = Vec3::new(
+        a.x() * b.x(),
+        a.y() * b.y(),
+        a.z() * b.z()
+        );
+
+    return result;
+}
