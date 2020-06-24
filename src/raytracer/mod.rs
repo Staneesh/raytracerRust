@@ -57,15 +57,18 @@ impl Stray
         self.window = Window::new(width, height);
     }
 
-    pub fn set_background(&mut self, r: f32, g: f32, b: f32)
+    pub fn set_background(&mut self, color: (f32, f32, f32))
     {
-        self.background_color = Vec3::new(r, g, b);
+        self.background_color = Vec3::new(color.0, color.1, color.2);
     }
     
-    pub fn add_sphere(&mut self, x: f32, y: f32, z: f32, r: f32,
+    pub fn add_sphere(&mut self, position: (f32, f32, f32), r: f32,
                       mat_index: u32)
         -> Result<(), &'static str>
     {
+        let x = position.0;
+        let y = position.1;
+        let z = position.2;
         let sphere = Sphere::new(Vec3::new(x, y, z), r);
         if self.find_material_by_index(&mat_index).is_none()
         {
@@ -77,7 +80,8 @@ impl Stray
     }
 
     pub fn add_material(&mut self,
-                        diffuse_r: f32, diffuse_g: f32, diffuse_b: f32,
+                        diffuse_color: (f32, f32, f32),
+                        emit_color: (f32, f32, f32),
                         shininess: f32, mat_index: u32)
         -> Result<(), &'static str>
     {
@@ -87,7 +91,8 @@ impl Stray
                        material with the same index!");
         }
         
-        let material = Material::new(diffuse_r, diffuse_g, diffuse_b,
+        let material = Material::new(diffuse_color,
+                                     emit_color,
                                      shininess);
         self.materials.push((material, mat_index));
 
@@ -113,10 +118,11 @@ impl Stray
         let mut ray: Ray = *ray_pass;
         let mut color = Vec3::new(0.0, 0.0, 0.0);
         let mut ray_energy = Vec3::new(1.0, 1.0, 1.0);
+        let min_hit_dist = 0.001;
 
         for _bounce_index in 1..self.tracing_depth + 1
         {
-            //NOTE(staneesh): this should be in a struct 'hit_record' or sth? 
+            //NOTE(staneesh): should this be in a struct 'hit_record' or sth? 
             let mut min_dist_sq_to_sphere = 100000.0;
             let mut closest_sphere = Option::<Sphere>::None;
             let mut closest_hit_point = Option::<Vec3>::None;
@@ -129,7 +135,8 @@ impl Stray
                 {
                     let l_sq = (hit_sphere_point - ray.position).length_squared();
 
-                    if l_sq < min_dist_sq_to_sphere
+                    if l_sq < min_dist_sq_to_sphere 
+                        && l_sq.sqrt() > min_hit_dist
                     {
                         closest_sphere = Some(*test_sphere);
                         min_dist_sq_to_sphere = l_sq;
@@ -145,6 +152,7 @@ impl Stray
                 let hit_sphere_point = closest_hit_point.unwrap();
                 let mat_index = closest_mat_index.unwrap();
 
+    
                 let normal_to_sphere_surface = (hit_sphere_point - 
                     test_sphere.position).normalize();
 
@@ -163,7 +171,8 @@ impl Stray
 
 
                 //println!("{}",diffuse_lighting);
-                color = color + hadamard(&ray_energy, &material_hit.diffuse_color); 
+                color = color + hadamard(&ray_energy, &material_hit.emit_color); 
+    
 
                 ray_energy = hadamard(&ray_energy, &(material_hit.diffuse_color * contrib));
 
@@ -235,8 +244,18 @@ impl Stray
                                    (current_pixel - self.camera.position).
                                    normalize());
 
-            let pixel_color =
+            let mut pixel_color =
                 self.ray_cast(&current_ray);
+            if false
+            {
+                if pixel_color.x() > 1.0 {pixel_color.set_x(1.0);}
+                if pixel_color.y() > 1.0 {pixel_color.set_y(1.0);}
+                if pixel_color.z() > 1.0 {pixel_color.set_z(1.0);}
+            
+                pixel_color.set_x(pixel_color.x().sqrt());
+                pixel_color.set_y(pixel_color.y().sqrt());
+                pixel_color.set_z(pixel_color.z().sqrt());
+            }
             let (color_x, color_y, color_z) = (
                 (pixel_color.x() * 255.0 + 0.5) as u8,
                 (pixel_color.y() * 255.0 + 0.5) as u8,
@@ -288,5 +307,4 @@ fn random_in_unit_sphere() -> Vec3
     let z = random_range(-1.0, 1.0);
     let r = (1.0 - z * z).sqrt();
     return Vec3::new(r * a.cos(), r * a.sin(), z);
-
 }
