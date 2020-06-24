@@ -17,6 +17,7 @@ use image::{ImageBuffer};
 
 pub struct Stray
 {
+    //TODO(stanisz): rays_per_pixel
     window: Window,
     camera: Camera,
 
@@ -80,8 +81,8 @@ impl Stray
     }
 
     pub fn add_material(&mut self,
-                        diffuse_color: (f32, f32, f32),
-                        emit_color: (f32, f32, f32),
+                        color: (f32, f32, f32),
+                        is_a_source: bool,
                         shininess: f32, mat_index: u32)
         -> Result<(), &'static str>
     {
@@ -91,8 +92,8 @@ impl Stray
                        material with the same index!");
         }
         
-        let material = Material::new(diffuse_color,
-                                     emit_color,
+        let material = Material::new(color,
+                                     is_a_source,
                                      shininess);
         self.materials.push((material, mat_index));
 
@@ -122,6 +123,12 @@ impl Stray
 
         for _bounce_index in 1..self.tracing_depth + 1
         {
+            //TODO(stanisz): check for correctness
+            if ray_energy.length() < 0.00001
+            {
+                break;
+            }
+
             //NOTE(staneesh): should this be in a struct 'hit_record' or sth? 
             let mut min_dist_sq_to_sphere = 100000.0;
             let mut closest_sphere = Option::<Sphere>::None;
@@ -171,10 +178,18 @@ impl Stray
 
 
                 //println!("{}",diffuse_lighting);
-                color = color + hadamard(&ray_energy, &material_hit.emit_color); 
-    
-
-                ray_energy = hadamard(&ray_energy, &(material_hit.diffuse_color * contrib));
+                if material_hit.is_a_source
+                {
+                    color = color + hadamard(&ray_energy,
+                                             &material_hit.color); 
+                    ray_energy = Vec3::zero();
+                }
+                else
+                {
+                    ray_energy = hadamard(&ray_energy, 
+                                          &(material_hit.color 
+                                            * contrib));
+                }
 
                 let prefect_reflection = ray.direction + 
                     2.0*(contrib) * normal_to_sphere_surface;

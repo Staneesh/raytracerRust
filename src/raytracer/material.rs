@@ -3,26 +3,24 @@ use glam::{Vec3};
 #[derive(Debug, Copy, Clone)]
 pub struct Material
 {
-    pub diffuse_color: Vec3,
-    pub emit_color: Vec3,
+    pub color: Vec3,
+    pub is_a_source: bool,
     pub shininess: f32,
 }
 
 impl Material
 {
-    pub fn new(diffuse: (f32, f32, f32),
-                emit: (f32, f32, f32),
+    pub fn new(color: (f32, f32, f32),
+                is_a_source: bool,
                shininess: f32) -> Material
     {
         Material
         {
-            diffuse_color: Vec3::new(diffuse.0,
-                                     diffuse.1,
-                                     diffuse.2),
-            emit_color: Vec3::new(emit.0,
-                                        emit.1,
-                                        emit.2),
+            color: Vec3::new(color.0,
+                                     color.1,
+                                     color.2),
 
+            is_a_source,
             shininess,
         }
     }
