@@ -44,7 +44,7 @@ impl Stray
             // using with_capacity?
             spheres: Vec::<(Sphere, u32)>::new(),
             materials: Vec::<(Material, u32)>::new(),
-            tracing_depth: 5,
+            tracing_depth: 1,
         }
     }
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
@@ -106,39 +106,67 @@ impl Stray
 
         for _bounce_index in 1..self.tracing_depth + 1
         {
+            //NOTE(staneesh): this should be in a struct 'hit_record' or sth? 
+            let mut min_dist_sq_to_sphere = 100000.0;
+            let mut closest_sphere = Option::<Sphere>::None;
+            let mut closest_hit_point = Option::<Vec3>::None;
+            let mut closest_mat_index = Option::<u32>::None;
+
             for (_index, (test_sphere, mat_index)) 
                 in self.spheres.iter().enumerate()
             {
                 if let Some(hit_sphere_point) = ray.hit_sphere(&test_sphere)
                 {
-                    let normal_to_sphere_surface = (hit_sphere_point - 
-                        test_sphere.position).normalize();
+                    let l_sq = (hit_sphere_point - ray.position).length_squared();
 
-                    let contrib = Vec3::dot(
-                        ray.direction.normalize(),
-                        normal_to_sphere_surface
-                            );
-
-                    let material_hit = 
-                        self.find_material_by_index(mat_index).unwrap();
-
-                    let diffuse_lighting = hadamard(&(contrib *  
-                        material_hit.diffuse_color), &ray_energy);    
-
-                    color = color + diffuse_lighting; 
-
-                    ray_energy = hadamard(&ray_energy, &diffuse_lighting);
-
-                    let prefect_reflection = ray.direction - 
-                        2.0*(contrib) * normal_to_sphere_surface;
-
-                    let new_dir = lerp::<Vec3>(
-                        random_in_unit_sphere(), prefect_reflection,
-                        material_hit.shininess);
-
-                    let new_ray = Ray::new(hit_sphere_point, new_dir);
-                    ray = new_ray;
+                    if l_sq < min_dist_sq_to_sphere
+                    {
+                        closest_sphere = Some(*test_sphere);
+                        min_dist_sq_to_sphere = l_sq;
+                        closest_hit_point = Some(hit_sphere_point); 
+                        closest_mat_index = Some(*mat_index);
+                    }
                 }
+            }
+            
+            if closest_sphere.is_some()
+            {
+                let test_sphere = closest_sphere.unwrap();
+                let hit_sphere_point = closest_hit_point.unwrap();
+                let mat_index = closest_mat_index.unwrap();
+
+                let normal_to_sphere_surface = (hit_sphere_point - 
+                    test_sphere.position).normalize();
+
+                let mut contrib =  Vec3::dot(
+                    normal_to_sphere_surface,
+                    -ray.direction.normalize()
+                        );
+
+                if contrib < 0.0
+                {
+                    contrib = 0.0;
+                }
+
+                let material_hit = 
+                    self.find_material_by_index(&mat_index).unwrap();
+
+                let diffuse_lighting = hadamard(&(contrib *  
+                    material_hit.diffuse_color), &ray_energy);    
+
+                //println!("{}",diffuse_lighting);
+                color = color + diffuse_lighting; 
+                ray_energy = hadamard(&ray_energy, &diffuse_lighting);
+
+                let prefect_reflection = ray.direction - 
+                    2.0*(contrib) * normal_to_sphere_surface;
+
+                let new_dir = lerp::<Vec3>(
+                    random_in_unit_sphere(), prefect_reflection,
+                    material_hit.shininess);
+
+                let new_ray = Ray::new(hit_sphere_point, new_dir);
+                ray = new_ray;
             }
         }
         
@@ -193,9 +221,9 @@ impl Stray
             let pixel_color =
                 self.ray_cast(&current_ray);
             let (color_x, color_y, color_z) = (
-                pixel_color.x() as u8,
-                pixel_color.y() as u8,
-                pixel_color.z() as u8 );
+                (pixel_color.x() * 255.0) as u8,
+                (pixel_color.y() * 255.0) as u8,
+                (pixel_color.z() * 255.0) as u8 );
 
             *pixel = image::Rgb([color_x, color_y, color_z]);
 

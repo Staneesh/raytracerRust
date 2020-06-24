@@ -4,8 +4,7 @@ use super::geometry::sphere::Sphere;
 #[derive(Debug, Copy, Clone)]
 pub struct Ray
 {
-    position: Vec3,
-    // TODO(staneesh): should not be pub
+    pub position: Vec3,
     pub direction: Vec3,
 }
 
