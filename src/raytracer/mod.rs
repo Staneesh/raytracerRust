@@ -44,7 +44,8 @@ impl Stray
             // using with_capacity?
             spheres: Vec::<(Sphere, u32)>::new(),
             materials: Vec::<(Material, u32)>::new(),
-            tracing_depth: 1,
+            //TODO(staniszz): bugged when more than 1
+            tracing_depth: 9,
         }
     }
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
@@ -155,7 +156,7 @@ impl Stray
                     material_hit.diffuse_color), &ray_energy);    
 
                 //println!("{}",diffuse_lighting);
-                color = color + diffuse_lighting; 
+                color = color + diffuse_lighting / (self.tracing_depth as f32); 
                 ray_energy = hadamard(&ray_energy, &diffuse_lighting);
 
                 let prefect_reflection = ray.direction - 
