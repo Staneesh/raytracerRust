@@ -26,7 +26,10 @@ pub struct Stray
     materials: Vec<(Material, u32)>,
 
     tracing_depth: u32,
+
+    background_color: Vec3,
 }
+
 
 impl Stray
 {
@@ -45,7 +48,8 @@ impl Stray
             spheres: Vec::<(Sphere, u32)>::new(),
             materials: Vec::<(Material, u32)>::new(),
             //TODO(staniszz): bugged when more than 1
-            tracing_depth: 9,
+            tracing_depth: 5,
+            background_color: Vec3::zero(),
         }
     }
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
@@ -53,6 +57,11 @@ impl Stray
         self.window = Window::new(width, height);
     }
 
+    pub fn set_background(&mut self, r: f32, g: f32, b: f32)
+    {
+        self.background_color = Vec3::new(r, g, b);
+    }
+    
     pub fn add_sphere(&mut self, x: f32, y: f32, z: f32, r: f32,
                       mat_index: u32)
         -> Result<(), &'static str>
@@ -140,8 +149,8 @@ impl Stray
                     test_sphere.position).normalize();
 
                 let mut contrib =  Vec3::dot(
-                    normal_to_sphere_surface,
-                    -ray.direction.normalize()
+                    -ray.direction.normalize(),
+                    normal_to_sphere_surface
                         );
 
                 if contrib < 0.0
@@ -152,25 +161,31 @@ impl Stray
                 let material_hit = 
                     self.find_material_by_index(&mat_index).unwrap();
 
-                let diffuse_lighting = hadamard(&(contrib *  
-                    material_hit.diffuse_color), &ray_energy);    
 
                 //println!("{}",diffuse_lighting);
-                color = color + diffuse_lighting / (self.tracing_depth as f32); 
-                ray_energy = hadamard(&ray_energy, &diffuse_lighting);
+                color = color + hadamard(&ray_energy, &material_hit.diffuse_color); 
 
-                let prefect_reflection = ray.direction - 
+                ray_energy = hadamard(&ray_energy, &(material_hit.diffuse_color * contrib));
+
+                let prefect_reflection = ray.direction + 
                     2.0*(contrib) * normal_to_sphere_surface;
 
                 let new_dir = lerp::<Vec3>(
-                    random_in_unit_sphere(), prefect_reflection,
+                    (random_in_unit_sphere() + 
+                     normal_to_sphere_surface).normalize(), prefect_reflection,
                     material_hit.shininess);
 
                 let new_ray = Ray::new(hit_sphere_point, new_dir);
                 ray = new_ray;
             }
+            else 
+            {
+                //NOTE(stanisz): hit background
+
+                color += hadamard(&ray_energy, &self.background_color);
+                return color;
+            }
         }
-        
         return color; 
     }
 
@@ -217,14 +232,15 @@ impl Stray
             let current_pixel = Vec3::new(new_x, new_y, new_z);
 
             let current_ray = Ray::new(self.camera.position,
-                                   current_pixel - self.camera.position);
+                                   (current_pixel - self.camera.position).
+                                   normalize());
 
             let pixel_color =
                 self.ray_cast(&current_ray);
             let (color_x, color_y, color_z) = (
-                (pixel_color.x() * 255.0) as u8,
-                (pixel_color.y() * 255.0) as u8,
-                (pixel_color.z() * 255.0) as u8 );
+                (pixel_color.x() * 255.0 + 0.5) as u8,
+                (pixel_color.y() * 255.0 + 0.5) as u8,
+                (pixel_color.z() * 255.0 + 0.5) as u8 );
 
             *pixel = image::Rgb([color_x, color_y, color_z]);
 
