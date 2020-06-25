@@ -271,7 +271,7 @@ impl Stray
     
             }
 
-            if false
+            if true
             {
                 if pixel_color.x() > 1.0 {pixel_color.set_x(1.0);}
                 if pixel_color.y() > 1.0 {pixel_color.set_y(1.0);}
