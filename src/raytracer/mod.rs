@@ -14,6 +14,7 @@ use geometry::sphere::Sphere;
 
 use glam::{Vec2, Vec3};
 use image::{ImageBuffer};
+use rand::prelude::*;
 
 pub struct Stray
 {
@@ -29,6 +30,7 @@ pub struct Stray
     tracing_depth: u32,
 
     background_color: Vec3,
+    rays_per_pixel: u32,
 }
 
 
@@ -38,7 +40,7 @@ impl Stray
     {
         Stray
         {
-            window: Window::new(512, 512),
+            window: Window::new(1024, 1024),
             camera: Camera::new(
                 Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0),
                 Vec2::new(1.0, 1.0), 1.0
@@ -51,6 +53,7 @@ impl Stray
             //TODO(staniszz): bugged when more than 1
             tracing_depth: 5,
             background_color: Vec3::zero(),
+            rays_per_pixel: 4,
         }
     }
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
@@ -259,8 +262,15 @@ impl Stray
                                    (current_pixel - self.camera.position).
                                    normalize());
 
-            let mut pixel_color =
-                self.ray_cast(&current_ray);
+            let mut pixel_color = Vec3::zero();
+
+            for _cur_ray_per_pixel in 1..self.rays_per_pixel + 1
+            {
+                pixel_color += self.ray_cast(&current_ray) / 
+                    (self.rays_per_pixel as f32);
+    
+            }
+
             if false
             {
                 if pixel_color.x() > 1.0 {pixel_color.set_x(1.0);}
@@ -307,7 +317,10 @@ fn hadamard(a: &Vec3, b: &Vec3) -> Vec3
 
 fn random0_1() -> f32
 {
-    return rand::random::<f32>() / std::f32::MAX;
+    let mut rng = rand::thread_rng();
+    let val: f32 = rng.gen();
+
+    return val;
 }
 
 fn random_range(a: f32, b: f32) -> f32
