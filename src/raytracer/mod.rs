@@ -46,11 +46,9 @@ impl Stray
                 Vec2::new(1.0, 1.0), 1.0
                 ),
 
-            //TODO(staneesh): should this be initialized
-            // using with_capacity?
             spheres: Vec::<(Sphere, u32)>::new(),
             materials: Vec::<(Material, u32)>::new(),
-            //TODO(staniszz): bugged when more than 1
+
             tracing_depth: 5,
             background_color: Vec3::zero(),
             rays_per_pixel: 4,
@@ -59,6 +57,11 @@ impl Stray
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
     {
         self.window = Window::new(width, height);
+        let a_ratio = width as f32 / height as f32;
+        self.camera = Camera::new(self.camera.position,
+                                  self.camera.direction,
+                                  Vec2::new(a_ratio, 1.0),
+                                  self.camera.canvas_distance);
     }
 
     pub fn set_background(&mut self, color: (f32, f32, f32))
@@ -85,7 +88,6 @@ impl Stray
 
     pub fn add_material(&mut self,
                         color: (f32, f32, f32),
-                        is_a_source: bool,
                         shininess: f32, mat_index: u32)
         -> Result<(), &'static str>
     {
@@ -96,13 +98,31 @@ impl Stray
         }
         
         let material = Material::new(color,
-                                     is_a_source,
+                                     false,
                                      shininess);
         self.materials.push((material, mat_index));
 
         return Ok(());
     }
    
+    pub fn add_emit_material(&mut self,
+                        color: (f32, f32, f32),
+                        mat_index: u32)
+        -> Result<(), &'static str>
+    {
+        if self.find_material_by_index(&mat_index).is_some()
+        {
+            return Err("Cannot add another \
+                       material with the same index!");
+        }
+        
+        let material = Material::new(color,
+                                     true,
+                                     0.0);
+        self.materials.push((material, mat_index));
+
+        return Ok(());
+    }
     fn find_material_by_index(&self, mat_index: &u32) -> Option<Material>
     {
         for (_position, (current_material, cur_mat_index)) in
@@ -245,7 +265,7 @@ impl Stray
             // --- End debug info.
 
             let u = x as f32 / (self.window.width -1) as f32;
-            let v = y as f32 / (self.window.width -1) as f32;
+            let v = y as f32 / (self.window.height -1) as f32;
 
             let new_x = lerp(self.camera.get_lower_left_canvas().x(),
                             self.camera.get_upper_right_canvas().x(),
