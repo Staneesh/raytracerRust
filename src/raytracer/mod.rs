@@ -54,6 +54,17 @@ impl Stray
             rays_per_pixel: 4,
         }
     }
+    
+    pub fn set_rays_per_pixel(&mut self, new_rays_per_pixel: u32)
+    {
+        self.rays_per_pixel = new_rays_per_pixel;
+    }
+
+    pub fn set_depth(&mut self, new_tracing_depth: u32)
+    {
+        self.tracing_depth = new_tracing_depth;
+    }
+    
     pub fn set_window_dimensions(&mut self, width: u32, height: u32)
     {
         self.window = Window::new(width, height);
@@ -66,7 +77,11 @@ impl Stray
 
     pub fn set_background(&mut self, color: (f32, f32, f32))
     {
-        self.background_color = Vec3::new(color.0, color.1, color.2);
+        self.background_color = Vec3::new(
+            clamp_float_zero_one(color.0),
+            clamp_float_zero_one(color.1),
+            clamp_float_zero_one(color.2)
+            );
     }
     
     pub fn add_sphere(&mut self, position: (f32, f32, f32), r: f32,
@@ -166,7 +181,7 @@ impl Stray
                     let l_sq = (hit_sphere_point - ray.position).length_squared();
 
                     if l_sq < min_dist_sq_to_sphere 
-                        && l_sq.sqrt() > min_hit_dist
+                        && l_sq > min_hit_dist * min_hit_dist
                     {
                         closest_sphere = Some(*test_sphere);
                         min_dist_sq_to_sphere = l_sq;
@@ -191,10 +206,7 @@ impl Stray
                     normal_to_sphere_surface
                         );
 
-                if contrib < 0.0
-                {
-                    contrib = 0.0;
-                }
+                contrib = clamp_float_zero_one(contrib);
 
                 let material_hit = 
                     self.find_material_by_index(&mat_index).unwrap();
@@ -294,20 +306,12 @@ impl Stray
     
             }
 
-            if true
-            {
-                if pixel_color.x() > 1.0 {pixel_color.set_x(1.0);}
-                if pixel_color.y() > 1.0 {pixel_color.set_y(1.0);}
-                if pixel_color.z() > 1.0 {pixel_color.set_z(1.0);}
-            
-                pixel_color.set_x(pixel_color.x().sqrt());
-                pixel_color.set_y(pixel_color.y().sqrt());
-                pixel_color.set_z(pixel_color.z().sqrt());
-            }
-            let (color_x, color_y, color_z) = (
-                (pixel_color.x() * 255.0 + 0.5) as u8,
-                (pixel_color.y() * 255.0 + 0.5) as u8,
-                (pixel_color.z() * 255.0 + 0.5) as u8 );
+            pixel_color = clamp_vec3_zero_one(&pixel_color);
+        
+            pixel_color = gamma_correct_color(&pixel_color);
+
+            let (color_x, color_y, color_z) = 
+                color_to_mask(&pixel_color);
 
             *pixel = image::Rgb([color_x, color_y, color_z]);
 
@@ -318,6 +322,39 @@ impl Stray
     }
 }
 
+fn color_to_mask(v: &Vec3) -> (u8, u8, u8)
+{
+    ((v.x() * 255.0) as u8,
+    (v.y() * 255.0) as u8,
+    (v.z() * 255.0) as u8)
+}
+
+fn gamma_correct_color(v: &Vec3) -> Vec3
+{
+    Vec3::new(
+        v.x().sqrt(),
+        v.y().sqrt(),
+        v.z().sqrt()
+        )
+}
+
+fn clamp_float_zero_one(a: f32) -> f32
+{
+    let mut res = a;
+    if res < 0.0 {res = 0.0;}
+    else if res > 1.0 {res = 1.0;}
+
+    return res;
+}
+
+fn clamp_vec3_zero_one(v: &Vec3) -> Vec3
+{
+    Vec3::new(
+        clamp_float_zero_one(v.x()),
+        clamp_float_zero_one(v.y()),
+        clamp_float_zero_one(v.z())
+        )
+}
 
 fn lerp<T>(a: T, b: T, t: f32) -> T
 where T:
