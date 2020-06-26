@@ -251,15 +251,18 @@ impl Stray
             if x == 0 &&
                 y % debug_display_scanlines_multiple == 0 
             {
-                if y == self.window.height - debug_display_scanlines_multiple
+                if y >= self.window.height - debug_display_scanlines_multiple
                 {
-                    println!("Scanning lines: {} - {}", 
+                    println!("Scanning lines: {} - {} (100.00%)", 
                              y, self.window.height)
                 }
                 else
                 {
-                    println!("Scanning lines: {} - {}", 
-                             y, y + debug_display_scanlines_multiple - 1)
+                    let top_val = y + debug_display_scanlines_multiple - 1;
+                    println!("Scanning lines: {} - {} ({:.2}%)", 
+                             y, top_val,
+                             top_val as f32 * 100.0
+                             / self.window.height as f32);
                 }
             }
             // --- End debug info.
