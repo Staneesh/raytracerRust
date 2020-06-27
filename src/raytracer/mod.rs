@@ -231,7 +231,7 @@ impl Stray
 
                 let new_dir = lerp::<Vec3>(
                     (random_in_unit_sphere() + 
-                     normal_to_sphere_surface).normalize(), prefect_reflection,
+                     prefect_reflection.normalize()).normalize(), prefect_reflection,
                     material_hit.shininess);
 
                 let new_ray = Ray::new(hit_sphere_point, new_dir);
