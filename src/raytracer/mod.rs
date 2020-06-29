@@ -298,11 +298,13 @@ impl Stray
 
     }
     
-    pub fn render_scence(&self) 
+    pub fn render_scence(&mut self) 
     {
         let debug_display_scanlines_multiple = 16;
         let mut img = ImageBuffer::new(self.window.width,
                                    self.window.height);
+
+        self.fill_work_queue();
 
         for (x, y, pixel) in img.enumerate_pixels_mut() 
         {
