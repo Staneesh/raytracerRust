@@ -16,6 +16,7 @@ use glam::{Vec2, Vec3};
 use image::{ImageBuffer};
 use rand::prelude::*;
 
+#[derive(Debug)]
 struct Work
 {
     lower_left_tile: (u32, u32),
@@ -32,7 +33,6 @@ impl Work
             lower_left_tile,
             upper_right_tile,
             colors: Vec::< Vec::<Vec3> >::new(),
-            
         }
     }
 }
@@ -77,7 +77,7 @@ impl Stray
             background_color: Vec3::zero(),
             rays_per_pixel: 4,
             work_queue: Vec::<Work>::new(),
-            tile_size: 50,
+            tile_size: 100,
         }
     }
     
@@ -294,7 +294,30 @@ impl Stray
                         ));
             }
         }
+        for x in 1..(self.window.width / self.tile_size) as u32 + 1 
+        {
+            let h_lower = (self.window.height / self.tile_size) as u32 * self.tile_size;
 
+            self.work_queue.push(
+                Work::new(((x-1) * self.tile_size, h_lower),
+                (x * self.tile_size, self.window.height)
+                ));
+        }
+        for y in 1..(self.window.height / self.tile_size) as u32 + 1 
+        {
+            let x_lower = (self.window.width / self.tile_size) as u32 * self.tile_size;
+
+            self.work_queue.push(
+                Work::new((x_lower,(y-1) * self.tile_size),
+                (self.window.width, y * self.tile_size)
+                ));
+        }
+
+        self.work_queue.push(Work::new(
+                ((self.window.width / self.tile_size) as u32 * self.tile_size,
+                (self.window.height/self.tile_size) as u32 * self.tile_size),
+                (self.window.width, self.window.height)
+                ));
 
     }
     
@@ -305,6 +328,7 @@ impl Stray
                                    self.window.height);
 
         self.fill_work_queue();
+        println!("Work queue:\n{:?}", self.work_queue);
 
         for (x, y, pixel) in img.enumerate_pixels_mut() 
         {
