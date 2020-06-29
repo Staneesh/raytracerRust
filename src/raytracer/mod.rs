@@ -16,6 +16,27 @@ use glam::{Vec2, Vec3};
 use image::{ImageBuffer};
 use rand::prelude::*;
 
+struct Work
+{
+    lower_left_tile: (u32, u32),
+    upper_right_tile: (u32, u32),
+    colors: Vec< Vec<Vec3> >,
+}
+
+impl Work
+{
+    pub fn new(lower_left_tile: (u32, u32), upper_right_tile: (u32, u32)) -> Work
+    {
+        Work
+        {
+            lower_left_tile,
+            upper_right_tile,
+            colors: Vec::< Vec::<Vec3> >::new(),
+            
+        }
+    }
+}
+
 pub struct Stray
 {
     //TODO(stanisz): rays_per_pixel
@@ -31,6 +52,9 @@ pub struct Stray
 
     background_color: Vec3,
     rays_per_pixel: u32,
+
+    work_queue: Vec<Work>,
+    tile_size: u32,
 }
 
 
@@ -52,6 +76,8 @@ impl Stray
             tracing_depth: 5,
             background_color: Vec3::zero(),
             rays_per_pixel: 4,
+            work_queue: Vec::<Work>::new(),
+            tile_size: 50,
         }
     }
     
@@ -248,6 +274,30 @@ impl Stray
         return color; 
     }
 
+    fn fill_work_queue(&mut self)
+    {
+        let number_of_tiles_x = self.window.width / self.tile_size;
+        let number_of_tiles_y = self.window.height / self.tile_size;
+
+        for y in 0..number_of_tiles_y
+        {
+            let y_coord = y * self.tile_size;
+            let y_coord_next = y_coord + self.tile_size;
+
+            for x in 0..number_of_tiles_x
+            {
+                let x_coord = x * self.tile_size;
+                let x_coord_next = x_coord + self.tile_size;
+
+                self.work_queue.push(Work::new(
+                    (x_coord, y_coord), (x_coord_next, y_coord_next)
+                        ));
+            }
+        }
+
+
+    }
+    
     pub fn render_scence(&self) 
     {
         let debug_display_scanlines_multiple = 16;
