@@ -4,7 +4,7 @@ fn main()
 {
     let mut stray = Stray::new();
 
-    stray.set_window_dimensions(350, 250);
+    stray.set_window_dimensions(1280, 720);
     stray.set_background((0.2, 0.2, 0.2));
 
     stray.add_material((1.0, 0.5, 0.1), 0.7, 0).unwrap();

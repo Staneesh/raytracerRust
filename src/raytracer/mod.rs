@@ -55,6 +55,7 @@ pub struct Stray
 
     work_queue: Vec<Work>,
     tile_size: u32,
+    number_of_threads: u32,
 }
 
 
@@ -78,6 +79,7 @@ impl Stray
             rays_per_pixel: 4,
             work_queue: Vec::<Work>::new(),
             tile_size: 100,
+            number_of_threads: 1,
         }
     }
     
@@ -328,7 +330,6 @@ impl Stray
                                    self.window.height);
 
         self.fill_work_queue();
-        println!("Work queue:\n{:?}", self.work_queue);
 
         for (x, y, pixel) in img.enumerate_pixels_mut() 
         {
