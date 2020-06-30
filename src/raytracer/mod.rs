@@ -252,7 +252,9 @@ impl Stray {
         return color;
     }
 
-    fn fill_work_queue(&mut self) {
+    fn fill_work_queue(&self) -> Vec<Work> {
+        let mut work_queue = Vec::<Work>::new();
+
         let number_of_tiles_x = self.window.width / self.tile_size;
         let number_of_tiles_y = self.window.height / self.tile_size;
 
@@ -264,7 +266,7 @@ impl Stray {
                 let x_coord = x * self.tile_size;
                 let x_coord_next = x_coord + self.tile_size;
 
-                self.work_queue.push(Work::new(
+                work_queue.push(Work::new(
                     (x_coord, y_coord),
                     (x_coord_next, y_coord_next),
                     self.camera.get_lower_left_canvas().z(),
@@ -276,7 +278,7 @@ impl Stray {
         for x in 1..(self.window.width / self.tile_size) as u32 + 1 {
             let h_lower = (self.window.height / self.tile_size) as u32 * self.tile_size;
 
-            self.work_queue.push(Work::new(
+            work_queue.push(Work::new(
                 ((x - 1) * self.tile_size, h_lower),
                 (x * self.tile_size, self.window.height),
                 self.camera.get_lower_left_canvas().z(),
@@ -287,7 +289,7 @@ impl Stray {
         for y in 1..(self.window.height / self.tile_size) as u32 + 1 {
             let x_lower = (self.window.width / self.tile_size) as u32 * self.tile_size;
 
-            self.work_queue.push(Work::new(
+            work_queue.push(Work::new(
                 (x_lower, (y - 1) * self.tile_size),
                 (self.window.width, y * self.tile_size),
                 self.camera.get_lower_left_canvas().z(),
@@ -296,7 +298,7 @@ impl Stray {
             ));
         }
 
-        self.work_queue.push(Work::new(
+        work_queue.push(Work::new(
             (
                 (self.window.width / self.tile_size) as u32 * self.tile_size,
                 (self.window.height / self.tile_size) as u32 * self.tile_size,
@@ -306,9 +308,11 @@ impl Stray {
             self.camera.position,
             self.rays_per_pixel,
         ));
+
+        return work_queue;
     }
 
-    fn worker_job(&mut self, work_task: &mut Work) {
+    fn worker_job(&self, work_task: &mut Work) {
         let task_width = work_task.upper_right_tile.0 - work_task.lower_left_tile.0;
         let task_height = work_task.upper_right_tile.1 - work_task.lower_left_tile.1;
 
@@ -349,14 +353,14 @@ impl Stray {
             }
         }
     }
-    pub fn render_scence(&mut self) {
-        self.fill_work_queue();
+    pub fn render_scence(&self) {
+        let mut work_queue = self.fill_work_queue();
 
         let number_of_all_tasks = self.work_queue.len();
         let mut work_task_index = number_of_all_tasks - 1;
-        let work_task = &mut self.work_queue[work_task_index];
 
         for _i in 0..number_of_all_tasks {
+            let work_task = &mut work_queue[work_task_index];
             self.worker_job(work_task);
             work_task_index -= 1;
         }
