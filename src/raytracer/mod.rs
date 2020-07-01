@@ -321,6 +321,9 @@ impl Stray {
                 pixel_color = clamp_vec3_zero_one(&pixel_color);
                 pixel_color = gamma_correct_color(&pixel_color);
 
+                work_task
+                    .colors
+                    .resize((task_width * task_height) as usize, Vec3::zero());
                 work_task.colors[(y * task_width + x) as usize] = pixel_color;
             }
         }
@@ -330,13 +333,17 @@ impl Stray {
         println!("after ret: {}", work_queue.len());
 
         let number_of_all_tasks = work_queue.len();
-        let mut work_task_index = number_of_all_tasks - 1;
+        let mut work_task_index: i32 = (number_of_all_tasks - 1) as i32;
 
         for _i in 0..number_of_all_tasks {
-            let work_task = &mut work_queue[work_task_index];
+            let work_task = &mut work_queue[work_task_index as usize];
             self.worker_job(work_task);
             work_task_index -= 1;
         }
+
+        //NOTE(stanisz): join threads, now i want to singlethreadingly
+        // fill the ImageBuffer with the data computed asynchronously.
+        // The data is stored in the work_queue.
 
         //let mut img = ImageBuffer::new(self.window.width, self.window.height);
         //img.save("RustyBeauty.png").unwrap();
