@@ -319,6 +319,7 @@ impl Stray {
                 }
 
                 pixel_color = clamp_vec3_zero_one(&pixel_color);
+                //TODO(stanisz): should this correction happen for colors in range [0;255]?
                 pixel_color = gamma_correct_color(&pixel_color);
 
                 work_task
@@ -358,9 +359,12 @@ impl Stray {
                     let img_x = work_task.lower_left_tile.0 + x;
 
                     let color_vec = work_task.colors[(y * task_width + x) as usize];
-                    let r = color_vec.x() as u8;
-                    let g = color_vec.y() as u8;
-                    let b = color_vec.z() as u8;
+
+                    let r = (color_vec.x() * 255.0) as u8;
+                    let g = (color_vec.y() * 255.0) as u8;
+                    let b = (color_vec.z() * 255.0) as u8;
+
+                    println!("color: {} {} {}", r, g, b);
 
                     let pixel = image::Rgb([r, g, b]);
                     img.put_pixel(img_x, img_y, pixel);
