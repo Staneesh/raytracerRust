@@ -49,7 +49,6 @@ pub struct Stray {
     background_color: Vec3,
     rays_per_pixel: u32,
 
-    work_queue: Vec<Work>,
     tile_size: u32,
     number_of_threads: u32,
 }
@@ -71,7 +70,6 @@ impl Stray {
             tracing_depth: 5,
             background_color: Vec3::zero(),
             rays_per_pixel: 4,
-            work_queue: Vec::<Work>::new(),
             tile_size: 100,
             number_of_threads: 1,
         }
@@ -282,6 +280,7 @@ impl Stray {
             (self.window.width, self.window.height),
         ));
 
+        println!("Before ret {}", work_queue.len());
         return work_queue;
     }
 
@@ -328,8 +327,9 @@ impl Stray {
     }
     pub fn render_scence(&self) {
         let mut work_queue = self.fill_work_queue();
+        println!("after ret: {}", work_queue.len());
 
-        let number_of_all_tasks = self.work_queue.len();
+        let number_of_all_tasks = work_queue.len();
         let mut work_task_index = number_of_all_tasks - 1;
 
         for _i in 0..number_of_all_tasks {
