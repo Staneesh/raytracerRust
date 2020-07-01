@@ -20,27 +20,15 @@ use rand::prelude::*;
 struct Work {
     lower_left_tile: (u32, u32),
     upper_right_tile: (u32, u32),
-    z: f32,
-    camera_pos: Vec3,
-    rays_per_pixel: u32,
     //NOTE(stanisz): rows from top to bottom
     colors: Vec<Vec3>,
 }
 
 impl Work {
-    pub fn new(
-        lower_left_tile: (u32, u32),
-        upper_right_tile: (u32, u32),
-        z: f32,
-        camera_pos: Vec3,
-        rays_per_pixel: u32,
-    ) -> Work {
+    pub fn new(lower_left_tile: (u32, u32), upper_right_tile: (u32, u32)) -> Work {
         Work {
             lower_left_tile,
             upper_right_tile,
-            z,
-            camera_pos,
-            rays_per_pixel,
             colors: Vec::<Vec3>::new(),
         }
     }
@@ -266,13 +254,7 @@ impl Stray {
                 let x_coord = x * self.tile_size;
                 let x_coord_next = x_coord + self.tile_size;
 
-                work_queue.push(Work::new(
-                    (x_coord, y_coord),
-                    (x_coord_next, y_coord_next),
-                    self.camera.get_lower_left_canvas().z(),
-                    self.camera.position,
-                    self.rays_per_pixel,
-                ));
+                work_queue.push(Work::new((x_coord, y_coord), (x_coord_next, y_coord_next)));
             }
         }
         for x in 1..(self.window.width / self.tile_size) as u32 + 1 {
@@ -281,9 +263,6 @@ impl Stray {
             work_queue.push(Work::new(
                 ((x - 1) * self.tile_size, h_lower),
                 (x * self.tile_size, self.window.height),
-                self.camera.get_lower_left_canvas().z(),
-                self.camera.position,
-                self.rays_per_pixel,
             ));
         }
         for y in 1..(self.window.height / self.tile_size) as u32 + 1 {
@@ -292,9 +271,6 @@ impl Stray {
             work_queue.push(Work::new(
                 (x_lower, (y - 1) * self.tile_size),
                 (self.window.width, y * self.tile_size),
-                self.camera.get_lower_left_canvas().z(),
-                self.camera.position,
-                self.rays_per_pixel,
             ));
         }
 
@@ -304,9 +280,6 @@ impl Stray {
                 (self.window.height / self.tile_size) as u32 * self.tile_size,
             ),
             (self.window.width, self.window.height),
-            self.camera.canvas_distance,
-            self.camera.position,
-            self.rays_per_pixel,
         ));
 
         return work_queue;
@@ -332,18 +305,18 @@ impl Stray {
                     v,
                 );
 
-                let new_z = work_task.z;
+                let new_z = self.camera.get_lower_left_canvas().z();
 
                 let current_pixel = Vec3::new(new_x, new_y, new_z);
                 let current_ray = Ray::new(
-                    work_task.camera_pos,
-                    (current_pixel - work_task.camera_pos).normalize(),
+                    self.camera.position,
+                    (current_pixel - self.camera.position).normalize(),
                 );
 
                 let mut pixel_color = Vec3::zero();
 
-                for _cur_ray_per_pixel in 0..work_task.rays_per_pixel {
-                    pixel_color += self.ray_cast(&current_ray) / (work_task.rays_per_pixel as f32);
+                for _cur_ray_per_pixel in 0..self.rays_per_pixel {
+                    pixel_color += self.ray_cast(&current_ray) / (self.rays_per_pixel as f32);
                 }
 
                 pixel_color = clamp_vec3_zero_one(&pixel_color);
