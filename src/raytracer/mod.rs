@@ -345,8 +345,30 @@ impl Stray {
         // fill the ImageBuffer with the data computed asynchronously.
         // The data is stored in the work_queue.
 
-        //let mut img = ImageBuffer::new(self.window.width, self.window.height);
-        //img.save("RustyBeauty.png").unwrap();
+        let mut img = ImageBuffer::new(self.window.width, self.window.height);
+
+        for i in 0..number_of_all_tasks {
+            let work_task = &work_queue[i as usize];
+            let task_height = work_task.upper_right_tile.1 - work_task.lower_left_tile.1;
+            let task_width = work_task.upper_right_tile.0 - work_task.lower_left_tile.0;
+
+            for y in 0..task_height {
+                let img_y = work_task.lower_left_tile.1 + y;
+                for x in 0..task_width {
+                    let img_x = work_task.lower_left_tile.0 + x;
+
+                    let color_vec = work_task.colors[(y * task_width + x) as usize];
+                    let r = color_vec.x() as u8;
+                    let g = color_vec.y() as u8;
+                    let b = color_vec.z() as u8;
+
+                    let pixel = image::Rgb([r, g, b]);
+                    img.put_pixel(img_x, img_y, pixel);
+                }
+            }
+        }
+
+        img.save("RustyBeautyAsyncPrepare.png").unwrap();
     }
 }
 
