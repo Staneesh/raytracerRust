@@ -280,7 +280,6 @@ impl Stray {
             (self.window.width, self.window.height),
         ));
 
-        println!("Before ret {}", work_queue.len());
         return work_queue;
     }
 
@@ -338,10 +337,6 @@ impl Stray {
                 //TODO(stanisz): should this correction happen for colors in range [0;255]?
                 pixel_color = gamma_correct_color(&pixel_color);
 
-                println!(
-                    "render_data: x:{} y:{} cam_x:{} cam_y:{} c:{}",
-                    new_x, new_y, camera_x, camera_y, pixel_color
-                );
                 work_task
                     .colors
                     .resize((task_width * task_height) as usize, Vec3::zero());
@@ -351,16 +346,10 @@ impl Stray {
     }
     pub fn render_scence(&self) {
         let mut work_queue = self.fill_work_queue();
-        println!("after ret: {}", work_queue.len());
 
         let number_of_all_tasks = work_queue.len();
         let mut work_task_index: i32 = (number_of_all_tasks - 1) as i32;
 
-        println!(
-            "camera coords: low_left:{} up_right:{}",
-            self.camera.get_lower_left_canvas(),
-            self.camera.get_upper_right_canvas()
-        );
         for _i in 0..number_of_all_tasks {
             let work_task = &mut work_queue[work_task_index as usize];
             self.worker_job(work_task);

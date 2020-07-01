@@ -3,7 +3,7 @@ use stray::raytracer::Stray;
 fn main() {
     let mut stray = Stray::new();
 
-    stray.set_window_dimensions(350, 250);
+    stray.set_window_dimensions(1280, 720);
     stray.set_background((0.2, 0.2, 0.2));
     stray.set_number_of_threads(4);
 
