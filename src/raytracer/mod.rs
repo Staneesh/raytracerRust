@@ -293,6 +293,11 @@ impl Stray {
                 let u = x as f32 / (task_width - 1) as f32;
                 let v = y as f32 / (task_height - 1) as f32;
 
+                let relative_offset = (
+                    (work_task.lower_left_tile.0 / self.window.width) as f32,
+                    (work_task.lower_left_tile.1 / self.window.height) as f32,
+                );
+
                 let new_x = lerp(
                     work_task.lower_left_tile.0 as f32,
                     work_task.upper_right_tile.0 as f32,
@@ -304,9 +309,20 @@ impl Stray {
                     v,
                 );
 
+                let camera_x = lerp(
+                    self.camera.get_lower_left_canvas().x(),
+                    self.camera.get_upper_right_canvas().x(),
+                    new_x / self.window.width as f32,
+                );
+
+                let camera_y = lerp(
+                    self.camera.get_lower_left_canvas().y(),
+                    self.camera.get_upper_right_canvas().y(),
+                    new_y / self.window.height as f32,
+                );
                 let new_z = self.camera.get_lower_left_canvas().z();
 
-                let current_pixel = Vec3::new(new_x, new_y, new_z);
+                let current_pixel = Vec3::new(camera_x, camera_y, new_z);
                 let current_ray = Ray::new(
                     self.camera.position,
                     (current_pixel - self.camera.position).normalize(),
@@ -322,6 +338,10 @@ impl Stray {
                 //TODO(stanisz): should this correction happen for colors in range [0;255]?
                 pixel_color = gamma_correct_color(&pixel_color);
 
+                println!(
+                    "render_data: x:{} y:{} cam_x:{} cam_y:{} c:{}",
+                    new_x, new_y, camera_x, camera_y, pixel_color
+                );
                 work_task
                     .colors
                     .resize((task_width * task_height) as usize, Vec3::zero());
@@ -336,6 +356,11 @@ impl Stray {
         let number_of_all_tasks = work_queue.len();
         let mut work_task_index: i32 = (number_of_all_tasks - 1) as i32;
 
+        println!(
+            "camera coords: low_left:{} up_right:{}",
+            self.camera.get_lower_left_canvas(),
+            self.camera.get_upper_right_canvas()
+        );
         for _i in 0..number_of_all_tasks {
             let work_task = &mut work_queue[work_task_index as usize];
             self.worker_job(work_task);
@@ -364,7 +389,7 @@ impl Stray {
                     let g = (color_vec.y() * 255.0) as u8;
                     let b = (color_vec.z() * 255.0) as u8;
 
-                    println!("color: {} {} {}", r, g, b);
+                    //println!("color: {} {} {}", r, g, b);
 
                     let pixel = image::Rgb([r, g, b]);
                     img.put_pixel(img_x, img_y, pixel);
