@@ -15,6 +15,8 @@ use window::Window;
 use glam::{Vec2, Vec3};
 use image::ImageBuffer;
 use rand::prelude::*;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 #[derive(Debug)]
 struct Work {
@@ -283,7 +285,8 @@ impl Stray {
         return work_queue;
     }
 
-    fn worker_job(&self, work_task: &mut Work) {
+    fn worker_job(&self, work_task_rc: Arc<Mutex<&mut Work>>) {
+        let mut work_task = work_task_rc.lock().unwrap();
         let task_width = work_task.upper_right_tile.0 - work_task.lower_left_tile.0;
         let task_height = work_task.upper_right_tile.1 - work_task.lower_left_tile.1;
 
@@ -351,7 +354,7 @@ impl Stray {
         let mut work_task_index: i32 = (number_of_all_tasks - 1) as i32;
 
         for _i in 0..number_of_all_tasks {
-            let work_task = &mut work_queue[work_task_index as usize];
+            let work_task = Arc::new(Mutex::new(&mut work_queue[work_task_index as usize]));
             self.worker_job(work_task);
             work_task_index -= 1;
         }
