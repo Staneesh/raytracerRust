@@ -287,26 +287,22 @@ impl Stray {
 
     fn worker_job(&self, work_queue: Arc<Mutex<&mut Vec<Work>>>, work_index: Arc<Mutex<u32>>) {
         let mut cur_index = work_index.lock().unwrap();
-        let work_task = work_queue.lock().unwrap()[*cur_index as usize].clone();
+        let cur_index_value = *cur_index;
+        let work_task_value = work_queue.lock().unwrap()[cur_index_value as usize].clone();
 
-        let task_width = work_task.upper_right_tile.0 - work_task.lower_left_tile.0;
-        let task_height = work_task.upper_right_tile.1 - work_task.lower_left_tile.1;
+        let task_lower_left = work_task_value.lower_left_tile;
+        let task_upper_right = work_task_value.upper_right_tile;
+
+        let task_width = task_upper_right.0 - task_lower_left.0;
+        let task_height = task_upper_right.1 - task_lower_left.1;
 
         for y in 0..task_height {
             for x in 0..task_width {
                 let u = x as f32 / (task_width - 1) as f32;
                 let v = y as f32 / (task_height - 1) as f32;
 
-                let new_x = lerp(
-                    work_task.lower_left_tile.0 as f32,
-                    work_task.upper_right_tile.0 as f32,
-                    u,
-                );
-                let new_y = lerp(
-                    work_task.lower_left_tile.1 as f32,
-                    work_task.upper_right_tile.1 as f32,
-                    v,
-                );
+                let new_x = lerp(task_lower_left.0 as f32, task_upper_right.0 as f32, u);
+                let new_y = lerp(task_lower_left.1 as f32, task_upper_right.1 as f32, v);
 
                 let camera_x = lerp(
                     self.camera.get_lower_left_canvas().x(),
@@ -337,10 +333,10 @@ impl Stray {
                 //TODO(stanisz): should this correction happen for colors in range [0;255]?
                 pixel_color = gamma_correct_color(&pixel_color);
 
-                work_queue.lock().unwrap()[*cur_index as usize]
+                work_queue.lock().unwrap()[cur_index_value as usize]
                     .colors
                     .resize((task_width * task_height) as usize, Vec3::zero());
-                work_queue.lock().unwrap()[*cur_index as usize].colors
+                work_queue.lock().unwrap()[cur_index_value as usize].colors
                     [(y * task_width + x) as usize] = pixel_color;
 
                 *cur_index += 1;
