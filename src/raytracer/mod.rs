@@ -18,7 +18,7 @@ use rand::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Work {
     lower_left_tile: (u32, u32),
     upper_right_tile: (u32, u32),
@@ -285,8 +285,11 @@ impl Stray {
         return work_queue;
     }
 
-    fn worker_job(&self, work_task_rc: Arc<Mutex<&mut Work>>) {
-        let mut work_task = work_task_rc.lock().unwrap();
+    fn worker_job(&self, work_queue: Arc<Mutex<&mut Vec<Work>>>, work_index: Arc<Mutex<u32>>) {
+        let mut cur_index = work_index.lock().unwrap();
+        *cur_index += 1;
+
+        let mut work_task = work_queue.lock().unwrap()[*cur_index as usize].clone();
         let task_width = work_task.upper_right_tile.0 - work_task.lower_left_tile.0;
         let task_height = work_task.upper_right_tile.1 - work_task.lower_left_tile.1;
 
@@ -348,15 +351,17 @@ impl Stray {
         }
     }
     pub fn render_scence(&self) {
-        let mut work_queue = self.fill_work_queue();
+        let raw_queue = &mut self.fill_work_queue();
+        let work_queue = Arc::new(Mutex::from(raw_queue));
+        let work_queue_len = work_queue.lock().unwrap().len();
 
-        let number_of_all_tasks = work_queue.len();
-        let mut work_task_index: i32 = (number_of_all_tasks - 1) as i32;
+        let work_task_index = Arc::new(Mutex::new(0));
 
-        for _i in 0..number_of_all_tasks {
-            let work_task = Arc::new(Mutex::new(&mut work_queue[work_task_index as usize]));
-            self.worker_job(work_task);
-            work_task_index -= 1;
+        loop {
+            self.worker_job(Arc::clone(&work_queue), Arc::clone(&work_task_index));
+            if *work_task_index.lock().unwrap() == work_queue_len as u32 {
+                break;
+            }
         }
 
         //NOTE(stanisz): join threads, now i want to singlethreadingly
@@ -365,8 +370,8 @@ impl Stray {
 
         let mut img = ImageBuffer::new(self.window.width, self.window.height);
 
-        for i in 0..number_of_all_tasks {
-            let work_task = &work_queue[i as usize];
+        for i in 0..work_queue_len {
+            let work_task = &work_queue.lock().unwrap()[i as usize];
             let task_height = work_task.upper_right_tile.1 - work_task.lower_left_tile.1;
             let task_width = work_task.upper_right_tile.0 - work_task.lower_left_tile.0;
 
