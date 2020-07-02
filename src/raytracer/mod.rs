@@ -288,11 +288,11 @@ impl Stray {
     fn worker_job(&self, work_queue: Arc<Mutex<&mut Vec<Work>>>, work_index: Arc<Mutex<u32>>) {
         let mut cur_index = work_index.lock().unwrap();
         let cur_index_value = *cur_index;
+
         let work_task_value = work_queue.lock().unwrap()[cur_index_value as usize].clone();
 
         let task_lower_left = work_task_value.lower_left_tile;
         let task_upper_right = work_task_value.upper_right_tile;
-
         let task_width = task_upper_right.0 - task_lower_left.0;
         let task_height = task_upper_right.1 - task_lower_left.1;
 
@@ -338,10 +338,9 @@ impl Stray {
                     .resize((task_width * task_height) as usize, Vec3::zero());
                 work_queue.lock().unwrap()[cur_index_value as usize].colors
                     [(y * task_width + x) as usize] = pixel_color;
-
-                *cur_index += 1;
             }
         }
+        *cur_index += 1;
     }
     pub fn render_scence(&self) {
         let raw_queue = &mut self.fill_work_queue();
@@ -352,7 +351,7 @@ impl Stray {
 
         loop {
             self.worker_job(Arc::clone(&work_queue), Arc::clone(&work_task_index));
-            if *work_task_index.lock().unwrap() == work_queue_len as u32 {
+            if *work_task_index.lock().unwrap() >= work_queue_len as u32 {
                 break;
             }
         }
