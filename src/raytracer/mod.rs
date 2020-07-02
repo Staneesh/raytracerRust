@@ -287,9 +287,8 @@ impl Stray {
 
     fn worker_job(&self, work_queue: Arc<Mutex<&mut Vec<Work>>>, work_index: Arc<Mutex<u32>>) {
         let mut cur_index = work_index.lock().unwrap();
-        *cur_index += 1;
+        let work_task = work_queue.lock().unwrap()[*cur_index as usize].clone();
 
-        let mut work_task = work_queue.lock().unwrap()[*cur_index as usize].clone();
         let task_width = work_task.upper_right_tile.0 - work_task.lower_left_tile.0;
         let task_height = work_task.upper_right_tile.1 - work_task.lower_left_tile.1;
 
@@ -297,11 +296,6 @@ impl Stray {
             for x in 0..task_width {
                 let u = x as f32 / (task_width - 1) as f32;
                 let v = y as f32 / (task_height - 1) as f32;
-
-                let relative_offset = (
-                    (work_task.lower_left_tile.0 / self.window.width) as f32,
-                    (work_task.lower_left_tile.1 / self.window.height) as f32,
-                );
 
                 let new_x = lerp(
                     work_task.lower_left_tile.0 as f32,
@@ -343,10 +337,13 @@ impl Stray {
                 //TODO(stanisz): should this correction happen for colors in range [0;255]?
                 pixel_color = gamma_correct_color(&pixel_color);
 
-                work_task
+                work_queue.lock().unwrap()[*cur_index as usize]
                     .colors
                     .resize((task_width * task_height) as usize, Vec3::zero());
-                work_task.colors[(y * task_width + x) as usize] = pixel_color;
+                work_queue.lock().unwrap()[*cur_index as usize].colors
+                    [(y * task_width + x) as usize] = pixel_color;
+
+                *cur_index += 1;
             }
         }
     }
